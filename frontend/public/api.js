@@ -84,9 +84,12 @@ const AuthAPI = {
 // ── Dashboard API ─────────────────────────────────────────────────────────────
 const DashboardAPI = {
   async get()        { return apiFetch('/api/dashboard'); },
-  // city/firm/institute are paginated — params: { page, limit, search, type }
+  // city/firm/institute are paginated — params: { page, limit, search, type, status, sort, dir }
   // type filters to an exact org_type ('CA'/'NON_CA') or institute_type
   // ('SCHOOL'/'COLLEGE'/'INSTITUTE'/'UNIVERSITY') — omit/empty for all types.
+  // status filters to org_status/institute_status ('ACTIVE'/'INACTIVE') — firm/institute only.
+  // sort: 'total'|'in_universe'|'not_in_universe'|'p1'|'p2'|'p3'|'p4'|'un' (default 'total')
+  // dir: 'asc'|'desc' (default 'desc')
   async city(params = {})      { return apiFetch('/api/dashboard/city' + toQS(params)); },
   async firm(params = {})      { return apiFetch('/api/dashboard/firm' + toQS(params)); },
   async institute(params = {}) { return apiFetch('/api/dashboard/institute' + toQS(params)); },
@@ -164,9 +167,47 @@ const VotersAPI = {
   async addWork(id, payload) {
     return apiFetch('/api/voters/' + id + '/work', { method: 'POST', body: payload });
   },
+  async editWork(id, whId, payload) {
+    return apiFetch('/api/voters/' + id + '/work/' + whId, { method: 'PATCH', body: payload });
+  },
+
+  async addPhone(id, payload) {
+    return apiFetch('/api/voters/' + id + '/phone', { method: 'POST', body: payload });
+  },
+  async editPhone(id, phoneId, payload) {
+    return apiFetch('/api/voters/' + id + '/phone/' + phoneId, { method: 'PATCH', body: payload });
+  },
+  async addEmail(id, payload) {
+    return apiFetch('/api/voters/' + id + '/email', { method: 'POST', body: payload });
+  },
+  async editEmail(id, emailId, payload) {
+    return apiFetch('/api/voters/' + id + '/email/' + emailId, { method: 'PATCH', body: payload });
+  },
 
   async addEducation(id, payload) {
     return apiFetch('/api/voters/' + id + '/education', { method: 'POST', body: payload });
+  },
+  async editEducation(id, eduHistId, payload) {
+    return apiFetch('/api/voters/' + id + '/education/' + eduHistId, { method: 'PATCH', body: payload });
+  },
+
+  // Call list / meet list / competitor — persisted toggle tags.
+  async setTag(id, tag_type, on) {
+    return apiFetch('/api/voters/' + id + '/tag', { method: 'POST', body: { tag_type, on } });
+  },
+  async bulkTag(ids, tag_type) {
+    return apiFetch('/api/voters/bulk-tag', { method: 'POST', body: { ids, tag_type } });
+  },
+
+  // Free-text labels (multiple per member).
+  async addLabel(id, label_text) {
+    return apiFetch('/api/voters/' + id + '/label', { method: 'POST', body: { label_text } });
+  },
+  async removeLabel(id, label_id) {
+    return apiFetch('/api/voters/' + id + '/label/' + label_id, { method: 'DELETE' });
+  },
+  async bulkLabel(ids, label_text) {
+    return apiFetch('/api/voters/bulk-label', { method: 'POST', body: { ids, label_text } });
   },
 };
 
@@ -180,6 +221,9 @@ const OrgsAPI = {
   async create(payload) {
     return apiFetch('/api/orgs', { method: 'POST', body: payload });
   },
+  async updateStatus(orgId, org_status) {
+    return apiFetch('/api/orgs/' + orgId + '/status', { method: 'PATCH', body: { org_status } });
+  },
 };
 
 // ── Institutes API ────────────────────────────────────────────────────────────
@@ -191,6 +235,9 @@ const InstitutesAPI = {
   },
   async create(payload) {
     return apiFetch('/api/institutes', { method: 'POST', body: payload });
+  },
+  async updateStatus(instituteId, institute_status) {
+    return apiFetch('/api/institutes/' + instituteId + '/status', { method: 'PATCH', body: { institute_status } });
   },
 };
 

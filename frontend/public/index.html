@@ -70,6 +70,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 /* ── IN-PAGE CONFIRM MODAL ── */
 #confirm-overlay{display:none;position:fixed;inset:0;background:rgba(26,25,22,.42);z-index:1000;align-items:center;justify-content:center;padding:20px}
 #confirm-overlay.show{display:flex}
+#choice-overlay{display:none;position:fixed;inset:0;background:rgba(26,25,22,.42);z-index:1000;align-items:center;justify-content:center;padding:20px}
+#choice-overlay.show{display:flex}
+.choice-option{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:13px;background:var(--surface);transition:border-color .15s,background .15s}
+.choice-option:hover{border-color:var(--accent);background:var(--accent-bg)}
 .confirm-modal{background:var(--surface);border-radius:var(--r2);max-width:420px;width:100%;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.18);animation:cmIn .15s ease}
 @keyframes cmIn{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .confirm-modal-title{font-size:15px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
@@ -488,6 +492,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
   </div>
 </div>
 
+<!-- IN-PAGE CHOICE MODAL (pick one of several contacts when more than one exists) -->
+<div id="choice-overlay">
+  <div class="confirm-modal">
+    <div class="confirm-modal-title"><span class="ico">?</span><span id="choice-modal-title-text">Choose one</span></div>
+    <div id="choice-modal-options" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div class="confirm-modal-actions">
+      <button class="confirm-cancel" onclick="closeChoiceModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- IN-PAGE FORM MODAL (replaces browser prompt()) -->
 <div id="form-modal-overlay">
   <div class="form-modal">
@@ -588,6 +603,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         All Members
       </div>
+      <div class="sidebar-item" onclick="showPage('calllist')" id="nav-calllist">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Call List
+      </div>
+      <div class="sidebar-item" onclick="showPage('meetlist')" id="nav-meetlist">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Meet List
+      </div>
+      <div class="sidebar-item" onclick="showPage('labels')" id="nav-labels">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41 11 3.83V3H3v8h.83l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z"/><circle cx="6.5" cy="6.5" r="1.5"/></svg>
+        Labels
+      </div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Summary</div>
@@ -606,9 +633,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Setup</div>
+      <div class="sidebar-item" onclick="showPage('assignedpreferences')" id="nav-assignedpreferences">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+        Assigned Preference
+      </div>
       <div class="sidebar-item" onclick="showPage('preferences')" id="nav-preferences">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-        Preferences
+        Preference
       </div>
       <div class="sidebar-item" onclick="showPage('goals')" id="nav-goals">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
@@ -860,7 +891,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     <div class="page" id="page-allvoters">
       <div style="padding:32px 36px;max-width:1200px">
         <div class="page-header">
-          <div><div class="page-title">Allnmembers</div><div class="page-sub" id="voters-sub">142 members in the SIRC voter roll for your race.</div></div>
+          <div><div class="page-title" id="voters-title">All members</div><div class="page-sub" id="voters-sub">142 members in the SIRC voter roll for your race.</div></div>
           <div style="position:relative">
             <button class="btn-sm" id="voter-filter-toggle-btn" onclick="toggleVoterFacetSidebar()" style="display:flex;align-items:center;gap:6px">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
@@ -875,14 +906,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
           <input type="checkbox" id="select-all-check" onchange="selectAllVoters(this.checked)" style="width:16px;height:16px;accent-color:var(--accent)">
           <span id="selected-count" style="font-size:13px;font-weight:500;color:var(--accent)">0 selected</span>
           <button class="btn-sm primary" onclick="addSelectedToUniverse()">★ Add selected to universe</button>
+          <button class="btn-sm" onclick="bulkAddToCallList()">📞 Add to call list</button>
+          <button class="btn-sm" onclick="bulkAddToMeet()">🤝 Add to meet</button>
+          <button class="btn-sm" onclick="bulkLabelSelected()">🏷️ Label</button>
           <button class="btn-sm" onclick="clearSelection()">Clear selection</button>
         </div>
-        <div class="notice"><b>Select voters</b> using the checkboxes to bulk-add them to My Universe. Click any name to open the member profile, click any firm to open the firm page. Preferences are assigned inside <b>My Universe</b>.</div>
         <div class="filter-bar">
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="search-input" type="text" placeholder="Name, membership no, organisation or city…" oninput="onVoterSearchInput()" id="voters-search">
           </div>
+          <button class="btn-sm" id="voter-universe-toggle-btn" onclick="toggleVoterUniverseFilter()">★ My Universe</button>
           <span id="voter-count" style="font-size:12px;color:var(--text3);margin-left:auto">12 shown</span>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -894,6 +928,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
               <th>Location <span class="sort-arrow" id="sort-arrow-city" onclick="toggleColSort('city')" title="Sort by city">↕</span></th>
               <th>Age <span class="sort-arrow" id="sort-arrow-age" onclick="toggleColSort('age')" title="Sort by age">↕</span></th>
               <th class="pvs">PVS <span class="sort-arrow" id="sort-arrow-pvs" onclick="toggleColSort('pvs')" title="Sort by PVS">↕</span></th>
+              <th id="voters-pref-th" style="display:none">Preference</th>
               <th>Add</th>
             </tr></thead>
             <tbody id="voters-tbody"></tbody>
@@ -903,15 +938,37 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
       </div>
     </div>
 
+    <!-- LABELS -->
+    <div class="page" id="page-labels">
+      <div style="padding:32px 36px;max-width:900px">
+        <div class="page-header">
+          <div><div class="page-title">Labels</div><div class="page-sub">Free-text labels applied to members — click one to see who has it.</div></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+          <table class="sum-tbl" id="labels-table">
+            <thead><tr><th>Label</th><th>Members</th></tr></thead>
+            <tbody id="labels-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- PREFERENCES -->
     <div class="page" id="page-preferences">
       <div style="padding:32px 36px;max-width:1200px">
         <div class="page-header">
           <div><div class="page-title">Assign preferences</div><div class="page-sub">Tap a box to set each member as P1, P2, P3, &gt;P3 or leave Unassigned.</div></div>
           <div style="display:flex;gap:8px;align-items:center">
-            <span class="pref p1"><span class="dot p1"></span>P1 Committed</span>
-            <span class="pref p2"><span class="dot p2"></span>P2 Persuadable</span>
-            <span class="pref p3"><span class="dot p3"></span>P3 Undecided</span>
+            <button class="btn-sm" onclick="showPage('citywise')">City-wise</button>
+            <button class="btn-sm" onclick="showPage('institutewise')">Institution-wise</button>
+            <button class="btn-sm" onclick="showPage('firmwise')">Organization-wise</button>
+            <div style="position:relative">
+              <button class="btn-sm" id="pref-filter-toggle-btn" onclick="togglePrefFacetSidebar()" style="display:flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+                <span>Filters</span>
+              </button>
+              <div id="pref-facet-sidebar" class="facet-popover" onclick="event.stopPropagation()"></div>
+            </div>
           </div>
         </div>
         <div class="filter-bar">
@@ -946,10 +1003,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
             <input type="text" class="search-input" placeholder="Search city…" oninput="onCitySearchInput()" id="city-search">
           </div>
         </div>
-        <div class="notice">Click <b>Open ›</b> or the city name to open its full member page with charts.</div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="city-table">
-            <thead><tr><th>City</th><th>Members</th><th>P1</th><th>P2</th><th>P3</th><th>&gt;P3</th><th>Unassigned</th><th></th></tr></thead>
+            <thead><tr>
+              <th>City</th>
+              <th>Members <span class="sort-arrow" id="city-sort-total" onclick="citySortBy('total')" title="Sort by members">↕</span></th>
+              <th>In Universe <span class="sort-arrow" id="city-sort-in_universe" onclick="citySortBy('in_universe')" title="Sort by in universe">↕</span></th>
+              <th>Not in Universe <span class="sort-arrow" id="city-sort-not_in_universe" onclick="citySortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
+              <th>P1 <span class="sort-arrow" id="city-sort-p1" onclick="citySortBy('p1')" title="Sort by P1">↕</span></th>
+              <th>P2 <span class="sort-arrow" id="city-sort-p2" onclick="citySortBy('p2')" title="Sort by P2">↕</span></th>
+              <th>P3 <span class="sort-arrow" id="city-sort-p3" onclick="citySortBy('p3')" title="Sort by P3">↕</span></th>
+              <th>&gt;P3 <span class="sort-arrow" id="city-sort-p4" onclick="citySortBy('p4')" title="Sort by >P3">↕</span></th>
+              <th>Unassigned <span class="sort-arrow" id="city-sort-un" onclick="citySortBy('un')" title="Sort by unassigned">↕</span></th>
+            </tr></thead>
             <tbody id="city-tbody"></tbody>
           </table>
         </div>
@@ -972,13 +1038,28 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
               <option value="CA">CA</option>
               <option value="NON_CA">Non-CA</option>
             </select>
+            <select onchange="onFirmStatusFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
+              <option value="">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
             <button class="btn-sm primary" onclick="openAddOrgModal()">+ Add Org</button>
           </div>
         </div>
-        <div class="notice">Click <b>Open ›</b> or the firm name to open its full page with member list and charts.</div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="firm-table">
-            <thead><tr><th>Organisation / Reg no.</th><th>Type</th><th>Members</th><th>P1</th><th>P2</th><th>P3</th><th>&gt;P3</th><th>Unassigned</th><th></th></tr></thead>
+            <thead><tr>
+              <th>Organisation</th>
+              <th>Type</th>
+              <th>Members <span class="sort-arrow" id="firm-sort-total" onclick="firmSortBy('total')" title="Sort by members">↕</span></th>
+              <th>In Universe <span class="sort-arrow" id="firm-sort-in_universe" onclick="firmSortBy('in_universe')" title="Sort by in universe">↕</span></th>
+              <th>Not in Universe <span class="sort-arrow" id="firm-sort-not_in_universe" onclick="firmSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
+              <th>P1 <span class="sort-arrow" id="firm-sort-p1" onclick="firmSortBy('p1')" title="Sort by P1">↕</span></th>
+              <th>P2 <span class="sort-arrow" id="firm-sort-p2" onclick="firmSortBy('p2')" title="Sort by P2">↕</span></th>
+              <th>P3 <span class="sort-arrow" id="firm-sort-p3" onclick="firmSortBy('p3')" title="Sort by P3">↕</span></th>
+              <th>&gt;P3 <span class="sort-arrow" id="firm-sort-p4" onclick="firmSortBy('p4')" title="Sort by >P3">↕</span></th>
+              <th>Unassigned <span class="sort-arrow" id="firm-sort-un" onclick="firmSortBy('un')" title="Sort by unassigned">↕</span></th>
+            </tr></thead>
             <tbody id="firm-tbody"></tbody>
           </table>
         </div>
@@ -1013,13 +1094,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
               <option value="INSTITUTE">Institute</option>
               <option value="UNIVERSITY">University</option>
             </select>
+            <select onchange="onInstituteStatusFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
+              <option value="">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
             <button class="btn-sm primary" onclick="openAddInstituteModal()">+ Add Institution</button>
           </div>
         </div>
-        <div class="notice">Click <b>Open ›</b> or the institute name to open its full page with alumni list and charts.</div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="institute-table">
-            <thead><tr><th>Institute</th><th>Type</th><th>Members</th><th>P1</th><th>P2</th><th>P3</th><th>&gt;P3</th><th>Unassigned</th><th></th></tr></thead>
+            <thead><tr>
+              <th>Institute</th>
+              <th>Type</th>
+              <th>Members <span class="sort-arrow" id="institute-sort-total" onclick="instituteSortBy('total')" title="Sort by members">↕</span></th>
+              <th>In Universe <span class="sort-arrow" id="institute-sort-in_universe" onclick="instituteSortBy('in_universe')" title="Sort by in universe">↕</span></th>
+              <th>Not in Universe <span class="sort-arrow" id="institute-sort-not_in_universe" onclick="instituteSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
+              <th>P1 <span class="sort-arrow" id="institute-sort-p1" onclick="instituteSortBy('p1')" title="Sort by P1">↕</span></th>
+              <th>P2 <span class="sort-arrow" id="institute-sort-p2" onclick="instituteSortBy('p2')" title="Sort by P2">↕</span></th>
+              <th>P3 <span class="sort-arrow" id="institute-sort-p3" onclick="instituteSortBy('p3')" title="Sort by P3">↕</span></th>
+              <th>&gt;P3 <span class="sort-arrow" id="institute-sort-p4" onclick="instituteSortBy('p4')" title="Sort by >P3">↕</span></th>
+              <th>Unassigned <span class="sort-arrow" id="institute-sort-un" onclick="instituteSortBy('un')" title="Sort by unassigned">↕</span></th>
+              <th>Status</th>
+            </tr></thead>
             <tbody id="institute-tbody"></tbody>
           </table>
         </div>
@@ -1277,6 +1374,27 @@ function confirmModalResolve(ok){
   if(!ok && typeof cbNo === 'function') cbNo();
 }
 
+// ── CHOICE MODAL (pick one of several contact values — e.g. two WhatsApp
+// numbers, or no primary email set) — replaces window.confirm-style branching. ──
+let _choicePending = null;
+function openChoiceModal(title, options, onPick){
+  const overlay = document.getElementById('choice-overlay');
+  document.getElementById('choice-modal-title-text').textContent = title || 'Choose one';
+  const body = document.getElementById('choice-modal-options');
+  body.innerHTML = options.map((opt,i)=>`<div class="choice-option" onclick="resolveChoiceModal(${i})"><span>${opt.label}</span><span style="color:var(--accent);font-size:11px;font-weight:600">Open →</span></div>`).join('');
+  _choicePending = { options, onPick };
+  overlay.classList.add('show');
+}
+function resolveChoiceModal(i){
+  const pending = _choicePending;
+  closeChoiceModal();
+  if(pending && typeof pending.onPick === 'function') pending.onPick(pending.options[i].value);
+}
+function closeChoiceModal(){
+  document.getElementById('choice-overlay').classList.remove('show');
+  _choicePending = null;
+}
+
 // ── GENERIC IN-PAGE FORM MODAL (replaces browser prompt()) ──
 // showFormModal({title, submitLabel, fields:[{key,label,placeholder,value,required,type,options,full}], onSubmit(values)})
 let _formModalConfig = null;
@@ -1289,8 +1407,8 @@ function showFormModal(cfg){
     const id = 'fm-'+f.key;
     if(f.type==='select'){
       const opts = (f.options||[]).map(o=>`<option value="${o}" ${f.value===o?'selected':''}>${o}</option>`).join('');
-      const onchangeAttr = f.onChangeClear ? ` onchange="fmClearSearchSelect('${f.onChangeClear}')"` : '';
-      return `<div class="ff${f.full?' ff-full':''}"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><select id="${id}"${onchangeAttr}>${opts}</select></div>`;
+      const onchangeAttr = (f.onChangeClear || f.onChangeShowHide || f.onChangeFillYear) ? ` onchange="fmFieldChanged('${f.key}',this.value)"` : '';
+      return `<div class="ff${f.full?' ff-full':''}" id="ff-wrap-${f.key}"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><select id="${id}"${onchangeAttr}>${opts}</select></div>`;
     }
     if(f.type==='searchselect'){
       // Hidden input holds the picked id (what submitFormModal reads); the
@@ -1298,7 +1416,7 @@ function showFormModal(cfg){
       // used wherever picking an existing firm/institution by name or reg no
       // should be a search instead of a long flat dropdown.
       const displayVal = f.displayValue || '';
-      return `<div class="ff${f.full?' ff-full':''}" style="position:relative">
+      return `<div class="ff${f.full?' ff-full':''}" id="ff-wrap-${f.key}" style="position:relative">
         <label>${f.label}${f.required?' <span class="req">*</span>':''}</label>
         <input type="hidden" id="${id}" value="${f.value!=null?f.value:''}">
         <input type="text" id="${id}-display" autocomplete="off" placeholder="${f.placeholder||'Search by name or reg no…'}" value="${String(displayVal).replace(/"/g,'&quot;')}"
@@ -1307,10 +1425,32 @@ function showFormModal(cfg){
         <div id="${id}-results" class="fm-searchselect-results" style="position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none"></div>
       </div>`;
     }
-    return `<div class="ff${f.full?' ff-full':''}"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><input id="${id}" type="${f.type||'text'}" placeholder="${f.placeholder||''}" value="${f.value!=null?f.value:''}"></div>`;
+    return `<div class="ff${f.full?' ff-full':''}" id="ff-wrap-${f.key}"><label>${f.label}${f.required?' <span class="req">*</span>':''}</label><input id="${id}" type="${f.type||'text'}" placeholder="${f.placeholder||''}" value="${f.value!=null?f.value:''}"></div>`;
   }).join('');
   document.getElementById('form-modal-overlay').classList.add('show');
+  // Apply any show/hide rules for each field's *current* (initial) value.
+  (cfg.fields||[]).forEach(f=>{ if(f.onChangeShowHide) fmApplyShowHide(f.onChangeShowHide, f.value); });
   setTimeout(()=>{ const first = body.querySelector('input,select'); if(first) first.focus(); }, 50);
+}
+// Generic onchange handler for select fields configured with onChangeClear
+// and/or onChangeShowHide (e.g. hiding "On WhatsApp?" when contact type is Email).
+function fmFieldChanged(key, value){
+  const field = (_formModalConfig && _formModalConfig.fields || []).find(f=>f.key===key);
+  if(!field) return;
+  if(field.onChangeClear) fmClearSearchSelect(field.onChangeClear);
+  if(field.onChangeShowHide) fmApplyShowHide(field.onChangeShowHide, value);
+  // e.g. work_status -> 'Inactive' defaults the "to_year" field to the
+  // current year (only if still empty) — the user can still change it.
+  if(field.onChangeFillYear && value!=='Active'){
+    const targetEl = document.getElementById('fm-'+field.onChangeFillYear);
+    if(targetEl && !targetEl.value) targetEl.value = new Date().getFullYear();
+  }
+}
+function fmApplyShowHide(rules, value){
+  const rule = rules[value];
+  if(!rule) return;
+  (rule.hide||[]).forEach(k=>{ const el = document.getElementById('ff-wrap-'+k); if(el) el.style.display = 'none'; });
+  (rule.show||[]).forEach(k=>{ const el = document.getElementById('ff-wrap-'+k); if(el) el.style.display = ''; });
 }
 function closeFormModal(){
   document.getElementById('form-modal-overlay').classList.remove('show');
@@ -1413,29 +1553,77 @@ function toggleSidebar(){
 }
 
 // ── QUICK ACTIONS (member profile "what to do with this voter" panel) ──
-function quickCall(phone){
-  if(!phone){ alert('No phone number on file.'); return; }
-  window.location.href = 'tel:'+phone.replace(/[^+\d]/g,'');
+// Pick the primary phone/email if one's flagged, else the first on file.
+// WhatsApp specifically prefers whichever number has is_whatsapp set.
+function getPrimaryPhone(m){
+  const phones = (m && m._phones) || [];
+  return (phones.find(p=>p.phone_is_primary) || phones[0] || {}).phone_number_full || '';
 }
-function quickWhatsapp(m){
-  const idx = m.whatsappPhoneIdx;
-  const num = idx===0 ? m.whatsapp : (idx===1?m.phone:idx===2?m.phone2:m.phone3);
-  if(!num){ alert('No WhatsApp number on file.'); return; }
-  window.open('https://wa.me/'+num.replace(/[^\d]/g,''), '_blank');
+// Triggers a tel:/mailto: protocol link via a real, temporary <a> click —
+// more reliable across browsers than assigning window.location.href directly,
+// which some browsers silently ignore for non-http(s) schemes when the page
+// itself doesn't navigate away (no default handler feedback either way).
+function fmTriggerLink(href){
+  const a = document.createElement('a');
+  a.href = href;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
-function quickEmail(email){
-  if(!email){ alert('No email on file.'); return; }
-  window.location.href = 'mailto:'+email;
+function quickCall(memberId){
+  const m = MEMBERS.find(x=>x.id===memberId);
+  const phone = getPrimaryPhone(m);
+  if(!phone){ showToast('No phone number on file.','error'); return; }
+  fmTriggerLink('tel:'+phone.replace(/[^+\d]/g,''));
 }
-function quickMeet(m){
-  confirmAction(`Schedule a meeting with ${m.name}? This will be logged as a planned interaction.`, ()=>{
-    alert(`Meeting scheduling noted for ${m.name}. (Hook up to your calendar / CRM here.)`);
-  }, 'Schedule meeting');
+// If exactly one number is flagged "On WhatsApp?", open it directly; if more
+// than one, ask which; if none flagged, fall back to the primary phone.
+function quickWhatsapp(memberId){
+  const m = MEMBERS.find(x=>x.id===memberId);
+  const phones = (m && m._phones) || [];
+  const waPhones = phones.filter(p=>p.is_whatsapp && (p.phone_number_full||p.phone_number));
+  const openWa = (phone)=>window.open('https://wa.me/'+phone.replace(/[^\d]/g,''), '_blank');
+  if(waPhones.length > 1){
+    openChoiceModal('Which WhatsApp number?', waPhones.map(p=>{
+      const num = p.phone_number_full||p.phone_number;
+      return { label: num, value: num };
+    }), openWa);
+    return;
+  }
+  const phone = waPhones.length===1 ? (waPhones[0].phone_number_full||waPhones[0].phone_number) : getPrimaryPhone(m);
+  if(!phone){ showToast('No WhatsApp number on file.','error'); return; }
+  openWa(phone);
 }
-function quickAddTodo(m){
-  confirmAction(`Add ${m.name} to your to-do / follow-up list?`, ()=>{
-    alert(`${m.name} added to your to-do list.`);
-  }, 'Add to to-do');
+// If a primary email is set, use it directly; otherwise, with more than one
+// email on file, ask which to use. Opens Gmail's compose window so it can
+// actually be sent (mailto: depends on a desktop mail client being configured).
+function quickEmail(memberId){
+  const m = MEMBERS.find(x=>x.id===memberId);
+  const emails = ((m && m._emails) || []).filter(e=>e.email_address);
+  const primary = emails.find(e=>e.email_is_primary);
+  const openGmail = (email)=>window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(email), '_blank');
+  if(primary){ openGmail(primary.email_address); return; }
+  if(emails.length > 1){
+    openChoiceModal('Which email address?', emails.map(e=>({ label: e.email_address, value: e.email_address })), openGmail);
+    return;
+  }
+  if(emails.length === 1){ openGmail(emails[0].email_address); return; }
+  showToast('No email on file.','error');
+}
+// Call list / meet list / competitor — persisted toggles (tbl_member_action_tag).
+function toggleMemberTag(id, tagType, on){
+  VotersAPI.setTag(id, tagType, on).then(()=>{
+    const m = MEMBERS.find(x=>x.id===id);
+    if(m){
+      const set = new Set(m._tags||[]);
+      if(on) set.add(tagType); else set.delete(tagType);
+      m._tags = [...set];
+    }
+    delete memberProfileCache[id];
+    renderMemberProfile(id);
+    showToast(on ? 'Added' : 'Removed');
+  }).catch(err=>showToast('Failed to update: '+err.message,'error'));
 }
 
 // ── PASSWORD SHOW/HIDE ──
@@ -1492,7 +1680,12 @@ function updateSidebarUser(user){
 function showPage(id, opts){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
-  const pg = document.getElementById('page-'+id);
+  // A few nav items are second entry points into existing page markup, just
+  // with a different default filter — "Assigned Preference" -> #page-preferences,
+  // "Call List"/"Meet List" -> #page-allvoters (same table, server-filtered by tag).
+  const SHARED_PAGE_EL = { assignedpreferences: 'page-preferences', calllist: 'page-allvoters', meetlist: 'page-allvoters' };
+  const pageElId = SHARED_PAGE_EL[id] || 'page-'+id;
+  const pg = document.getElementById(pageElId);
   if(pg) pg.classList.add('active');
   const nav = document.getElementById('nav-'+id);
   if(nav) nav.classList.add('active');
@@ -1500,8 +1693,12 @@ function showPage(id, opts){
 
   if(id==='dashboard'){ loadDashboard(); }
   if(id==='universe'){ loadAndRenderUniverse(); }
-  if(id==='allvoters'){ loadAndRenderVoters(); }
-  if(id==='preferences'){ loadAndRenderPrefs(); }
+  if(id==='allvoters'){ voterForcedTag = ''; loadAndRenderVoters(); }
+  if(id==='calllist'){ voterForcedTag = 'call_list'; loadAndRenderVoters(); }
+  if(id==='meetlist'){ voterForcedTag = 'meet_list'; loadAndRenderVoters(); }
+  if(id==='labels'){ loadAndRenderLabels(); }
+  if(id==='preferences'){ prefAssignedOnlyMode = false; loadAndRenderPrefs(); }
+  if(id==='assignedpreferences'){ prefAssignedOnlyMode = true; loadAndRenderPrefs(); }
   if(id==='citywise') renderCityTable();
   if(id==='firmwise') renderFirmTable();
   if(id==='institutewise') renderInstituteTable();
@@ -1957,18 +2154,15 @@ function doSignOut(){
 }
 
 // ── RENDER HELPERS ──
+// Preference is shown as its plain label (P1/P2/P3/>P3/—) everywhere — no
+// colour, dot, or pill background.
 function prefPill(p){
-  const cls=p==='un'?'unassigned':p==='p4'?'p4':p;
-  const label=PREF_SHORT[p]||p;
-  return `<span class="pref ${cls}">${label}</span>`;
+  return PREF_SHORT[p]||p;
 }
 function avatarEl(m){
   // Photo/avatar icon removed from all list & summary views.
   // The member profile hero renders its own avatar separately.
   return '';
-}
-function nameLink(m){
-  return `<span style="font-weight:500;font-size:13px;cursor:pointer;color:var(--accent)" onclick="showPage('memberprofile',{memberId:'${m.id}'})">${m.name}</span>`;
 }
 function orgLink(m){
   return `<span style="cursor:pointer;color:var(--accent)" onclick="showPage('firmdetail',{firm:'${m.org.replace(/'/g,'\\\'')}'})">` + m.org + '</span>';
@@ -1988,9 +2182,10 @@ let univFacetsData = null;
 let _univSearchDebounce = null;
 
 // ── Amazon-style facet filter popover (mirrors the All Members facets, plus Preference) ──
-const univFacets = { city: new Set(), org: new Set(), catype: new Set(), firmType: new Set(), pref: new Set() };
+const univFacets = { city: new Set(), org: new Set(), catype: new Set(), firmType: new Set(), pref: new Set(), label: new Set() };
 let univRangeFilters = { pvsMin: 0, pvsMax: 1000, ageMin: null, ageMax: null };
-const univFacetUi = { city: { search:'', expanded:false }, org: { search:'', expanded:false } };
+const univFacetUi = { city: { expanded:false }, org: { expanded:false }, pref: { expanded:false }, firmType: { expanded:false }, catype: { expanded:false }, label: { expanded:false } };
+let univFacetCommonSearch = '';
 
 function buildUnivQueryParams(){
   const q = (document.getElementById('univ-search')||{}).value||'';
@@ -2005,13 +2200,15 @@ function buildUnivQueryParams(){
     catype:    [...univFacets.catype].join(','),
     firm_type: [...univFacets.firmType].join(','),
     pref:      univFacets.pref.size===1 ? [...univFacets.pref][0] : '',
+    label:     [...univFacets.label].join(','),
     universe:  'in', // permanent scope — this IS the universe page
   };
 }
 function resetUnivFilters(){
   Object.values(univFacets).forEach(s=>s.clear());
   univRangeFilters = { pvsMin: 0, pvsMax: 1000, ageMin: null, ageMax: null };
-  Object.values(univFacetUi).forEach(u=>{ u.search=''; u.expanded=false; });
+  Object.values(univFacetUi).forEach(u=>{ u.expanded=false; });
+  univFacetCommonSearch = '';
   const sEl = document.getElementById('univ-search'); if(sEl) sEl.value='';
   univPage = 1;
   loadAndRenderUniverse();
@@ -2027,8 +2224,8 @@ function toggleUnivFacet(facet, value, checked){
   univPage = 1;
   loadAndRenderUniverse();
 }
-function setUnivFacetSearch(facet, value){
-  univFacetUi[facet].search = value;
+function setUnivFacetCommonSearch(value){
+  univFacetCommonSearch = value;
   renderUnivFacetSidebar();
 }
 function toggleUnivFacetExpand(facet){
@@ -2051,12 +2248,14 @@ async function loadUnivFacets(){
 function renderUnivFacetGroup(facet, label, opts){
   opts = opts || {};
   const facetRows = (univFacetsData && univFacetsData[facet]) || [];
-  let entries = facetRows.map(r=>[r.val, parseInt(r.cnt)||0]).sort((a,b)=>b[1]-a[1]);
-  const ui = univFacetUi[facet];
-  if(ui && ui.search){
-    const s = ui.search.toLowerCase();
+  let entries = facetRows
+    .filter(r => !(opts.excludeValues||[]).includes(r.val))
+    .map(r=>[r.val, parseInt(r.cnt)||0]).sort((a,b)=>b[1]-a[1]);
+  if(univFacetCommonSearch){
+    const s = univFacetCommonSearch.toLowerCase();
     entries = entries.filter(([val])=>String((opts.labelMap&&opts.labelMap[val])||val).toLowerCase().includes(s));
   }
+  const ui = univFacetUi[facet];
   const LIMIT = 8;
   const showAll = ui ? ui.expanded : true;
   const shown = showAll ? entries : entries.slice(0, LIMIT);
@@ -2071,15 +2270,11 @@ function renderUnivFacetGroup(facet, label, opts){
       <span style="color:var(--text3);font-size:11px">${count}</span>
     </label>`;
   }).join('') || `<div style="font-size:11px;color:var(--text3);padding:4px 0">No matches</div>`;
-  const searchBox = opts.searchable
-    ? `<input type="text" id="univ-facet-search-${facet}" placeholder="Search ${label.toLowerCase()}…" value="${(ui.search||'').replace(/"/g,'&quot;')}" oninput="setUnivFacetSearch('${facet}',this.value)" style="width:100%;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box">`
-    : '';
   const moreLink = entries.length>LIMIT
     ? `<a onclick="toggleUnivFacetExpand('${facet}')" style="font-size:11px;color:var(--accent);cursor:pointer;display:inline-block;margin-top:6px">${showAll?'Show less':`+ ${entries.length-LIMIT} more`}</a>`
     : '';
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
     <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${label}</div>
-    ${searchBox}
     <div style="display:flex;flex-direction:column;${showAll&&entries.length>LIMIT?'max-height:240px;overflow-y:auto':''}">${rows}</div>
     ${moreLink}
   </div>`;
@@ -2104,7 +2299,7 @@ function renderUnivFacetSidebar(){
   const selStart = active && active.selectionStart!=null ? active.selectionStart : null;
 
   const activeCount = univFacets.city.size + univFacets.org.size + univFacets.catype.size +
-    univFacets.firmType.size + univFacets.pref.size +
+    univFacets.firmType.size + univFacets.pref.size + univFacets.label.size +
     (univRangeFilters.pvsMin>0 || univRangeFilters.pvsMax<1000 ? 1 : 0) +
     (univRangeFilters.ageMin!=null || univRangeFilters.ageMax!=null ? 1 : 0);
 
@@ -2116,13 +2311,15 @@ function renderUnivFacetSidebar(){
         <a onclick="toggleUnivFacetSidebar()" style="font-size:14px;color:var(--text3);cursor:pointer;line-height:1" title="Close">✕</a>
       </div>
     </div>
+    <input type="text" id="univ-facet-common-search" placeholder="Search city, organisation, label…" value="${univFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setUnivFacetCommonSearch(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:4px;box-sizing:border-box">
     ${renderUnivRangeFacet('PVS score','univ-pvs-min','univ-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderUnivRangeFacet('Age','univ-age-min','univ-age-max','ageMin','ageMax','Min','Max')}
     ${renderUnivFacetGroup('pref','Preference',{labelMap:{p1:'P1 Committed',p2:'P2 Persuadable',p3:'P3 Undecided',p4:'>P3',un:'Unassigned'}})}
-    ${renderUnivFacetGroup('city','City',{searchable:true})}
-    ${renderUnivFacetGroup('org','Organisation',{searchable:true})}
+    ${renderUnivFacetGroup('city','City')}
+    ${renderUnivFacetGroup('org','Organisation')}
     ${renderUnivFacetGroup('firmType','Firm Type',{labelMap:{CA:'CA firm',NON_CA:'Non-CA firm'}})}
-    ${renderUnivFacetGroup('catype','Membership',{labelMap:{ACA:'Associate (ACA)',FCA:'Fellow (FCA)'}})}
+    ${renderUnivFacetGroup('catype','Membership',{labelMap:{FCA:'Fellow (FCA)'},excludeValues:['ACA']})}
+    ${renderUnivFacetGroup('label','Label')}
   `;
 
   if(activeId){
@@ -2224,9 +2421,15 @@ let _voterSearchDebounce = null;
 // Each facet is a Set of selected raw values (multi-select within a facet = OR,
 // across facets = AND). Counts come from GET /api/voters/facets and reflect how
 // many rows would match if that option were added, given every *other* active filter.
-const voterFacets = { city: new Set(), org: new Set(), catype: new Set(), firmType: new Set(), universe: new Set() };
+const voterFacets = { city: new Set(), org: new Set(), catype: new Set(), firmType: new Set(), universe: new Set(), label: new Set() };
 let voterRangeFilters = { pvsMin: 0, pvsMax: 1000, ageMin: null, ageMax: null };
-const voterFacetUi = { city: { search:'', expanded:false }, org: { search:'', expanded:false } };
+const voterFacetUi = { city: { expanded:false }, org: { expanded:false }, label: { expanded:false }, firmType: { expanded:false }, catype: { expanded:false } };
+// One search box at the top of the popover filters every facet group's
+// visible options at once, instead of each group having its own search input.
+let voterFacetCommonSearch = '';
+// Forces the All Members listing to just call_list/meet_list tagged members —
+// set by the Call List / Meet List nav items, which share this same page.
+let voterForcedTag = '';
 
 // Builds the query-param object sent to /api/voters and /api/voters/facets
 // from the current search box + facet + range state.
@@ -2242,6 +2445,8 @@ function buildVoterQueryParams(){
     firm:      [...voterFacets.org].join(','),
     catype:    [...voterFacets.catype].join(','),
     firm_type: [...voterFacets.firmType].join(','),
+    label:     [...voterFacets.label].join(','),
+    tag:       voterForcedTag,
     universe:  voterFacets.universe.size===1 ? [...voterFacets.universe][0] : '',
   };
 }
@@ -2249,7 +2454,9 @@ function buildVoterQueryParams(){
 function resetVoterFilters(){
   Object.values(voterFacets).forEach(s=>s.clear());
   voterRangeFilters = { pvsMin: 0, pvsMax: 1000, ageMin: null, ageMax: null };
-  Object.values(voterFacetUi).forEach(u=>{ u.search=''; u.expanded=false; });
+  Object.values(voterFacetUi).forEach(u=>{ u.expanded=false; });
+  voterFacetCommonSearch = '';
+  const univBtn = document.getElementById('voter-universe-toggle-btn'); if(univBtn) univBtn.classList.remove('active');
   const sEl = document.getElementById('voters-search'); if(sEl) sEl.value='';
   voterPage = 1;
   loadAndRenderVoters();
@@ -2260,13 +2467,27 @@ function setVoterRange(key, value){
   voterPage = 1;
   loadAndRenderVoters();
 }
+// Standalone "My Universe" toggle beside the search bar (moved out of the
+// filter popover) — reuses the same voterFacets.universe state the backend
+// query already reads; when on, the table also shows each member's Preference.
+function toggleVoterUniverseFilter(){
+  const on = voterFacets.universe.has('in');
+  voterFacets.universe.clear();
+  if(!on) voterFacets.universe.add('in');
+  const btn = document.getElementById('voter-universe-toggle-btn');
+  if(btn) btn.classList.toggle('active', !on);
+  voterPage = 1;
+  loadAndRenderVoters();
+}
 function toggleVoterFacet(facet, value, checked){
   if(checked) voterFacets[facet].add(value); else voterFacets[facet].delete(value);
   voterPage = 1;
   loadAndRenderVoters();
 }
-function setFacetSearch(facet, value){
-  voterFacetUi[facet].search = value;
+// One shared search box at the top of the popover, filtering every facet
+// group's visible options at once (instead of a search input per group).
+function setVoterFacetCommonSearch(value){
+  voterFacetCommonSearch = value;
   renderFacetSidebar();
 }
 function toggleFacetExpand(facet){
@@ -2292,12 +2513,14 @@ async function loadVoterFacets(){
 function renderFacetGroup(facet, label, opts){
   opts = opts || {};
   const facetRows = (voterFacetsData && voterFacetsData[facet]) || [];
-  let entries = facetRows.map(r=>[r.val, parseInt(r.cnt)||0]).sort((a,b)=>b[1]-a[1]);
-  const ui = voterFacetUi[facet];
-  if(ui && ui.search){
-    const s = ui.search.toLowerCase();
+  let entries = facetRows
+    .filter(r => !(opts.excludeValues||[]).includes(r.val))
+    .map(r=>[r.val, parseInt(r.cnt)||0]).sort((a,b)=>b[1]-a[1]);
+  if(voterFacetCommonSearch){
+    const s = voterFacetCommonSearch.toLowerCase();
     entries = entries.filter(([val])=>String((opts.labelMap&&opts.labelMap[val])||val).toLowerCase().includes(s));
   }
+  const ui = voterFacetUi[facet];
   const LIMIT = 8;
   const showAll = ui ? ui.expanded : true;
   const shown = showAll ? entries : entries.slice(0, LIMIT);
@@ -2312,15 +2535,11 @@ function renderFacetGroup(facet, label, opts){
       <span style="color:var(--text3);font-size:11px">${count}</span>
     </label>`;
   }).join('') || `<div style="font-size:11px;color:var(--text3);padding:4px 0">No matches</div>`;
-  const searchBox = opts.searchable
-    ? `<input type="text" id="facet-search-${facet}" placeholder="Search ${label.toLowerCase()}…" value="${(ui.search||'').replace(/"/g,'&quot;')}" oninput="setFacetSearch('${facet}',this.value)" style="width:100%;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box">`
-    : '';
   const moreLink = entries.length>LIMIT
     ? `<a onclick="toggleFacetExpand('${facet}')" style="font-size:11px;color:var(--accent);cursor:pointer;display:inline-block;margin-top:6px">${showAll?'Show less':`+ ${entries.length-LIMIT} more`}</a>`
     : '';
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
     <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${label}</div>
-    ${searchBox}
     <div style="display:flex;flex-direction:column;${showAll&&entries.length>LIMIT?'max-height:240px;overflow-y:auto':''}">${rows}</div>
     ${moreLink}
   </div>`;
@@ -2349,7 +2568,7 @@ function renderFacetSidebar(){
   const selStart = active && active.selectionStart!=null ? active.selectionStart : null;
 
   const activeCount = voterFacets.city.size + voterFacets.org.size + voterFacets.catype.size +
-    voterFacets.firmType.size + voterFacets.universe.size +
+    voterFacets.firmType.size + voterFacets.universe.size + voterFacets.label.size +
     (voterRangeFilters.pvsMin>0 || voterRangeFilters.pvsMax<1000 ? 1 : 0) +
     (voterRangeFilters.ageMin!=null || voterRangeFilters.ageMax!=null ? 1 : 0);
 
@@ -2361,13 +2580,14 @@ function renderFacetSidebar(){
         <a onclick="toggleVoterFacetSidebar()" style="font-size:14px;color:var(--text3);cursor:pointer;line-height:1" title="Close">✕</a>
       </div>
     </div>
+    <input type="text" id="voter-facet-common-search" placeholder="Search city, organisation, label…" value="${voterFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setVoterFacetCommonSearch(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:4px;box-sizing:border-box">
     ${renderRangeFacet('PVS score','voter-pvs-min','voter-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderRangeFacet('Age','voter-age-min','voter-age-max','ageMin','ageMax','Min','Max')}
-    ${renderFacetGroup('city','City',{searchable:true})}
-    ${renderFacetGroup('org','Organisation',{searchable:true})}
+    ${renderFacetGroup('city','City')}
+    ${renderFacetGroup('org','Organisation')}
     ${renderFacetGroup('firmType','Firm Type',{labelMap:{CA:'CA firm',NON_CA:'Non-CA firm'}})}
-    ${renderFacetGroup('catype','Membership',{labelMap:{ACA:'Associate (ACA)',FCA:'Fellow (FCA)'}})}
-    ${renderFacetGroup('universe','Universe',{labelMap:{in:'In my universe',out:'Not in universe'}})}
+    ${renderFacetGroup('catype','Membership',{labelMap:{FCA:'Fellow (FCA)'},excludeValues:['ACA']})}
+    ${renderFacetGroup('label','Label')}
   `;
 
   if(activeId){
@@ -2381,6 +2601,9 @@ function renderFacetSidebar(){
 // updates); call loadAndRenderVoters() when the filters/page/sort change.
 function renderVoters(){
   const data = voterPageRows;
+  const showPref = voterFacets.universe.has('in');
+  const prefTh = document.getElementById('voters-pref-th');
+  if(prefTh) prefTh.style.display = showPref ? '' : 'none';
 
   const tbody = document.getElementById('voters-tbody');
   tbody.innerHTML = data.map(m=>{
@@ -2399,6 +2622,7 @@ function renderVoters(){
       <td onclick="event.stopPropagation()" style="font-size:13px"><span style="cursor:pointer;color:var(--accent)" onclick="showPage('citydetail',{city:'${m.city}'})">${m.city}</span></td>
       <td style="font-size:13px">${m.age}</td>
       <td class="pvs">${m.pvs}</td>
+      ${showPref ? `<td onclick="event.stopPropagation()">${prefPill(memberPrefs[m.id]||m.pref)}</td>` : ''}
       <td onclick="event.stopPropagation()">
         <button class="add-btn ${inUniv?'added':''}" onclick="addToUniverse('${m.id}',this)" title="${inUniv?'In universe':'Add to universe'}">${inUniv?'✓':'+'}</button>
       </td>
@@ -2479,6 +2703,37 @@ function addSelectedToUniverse(){
     showToast('Failed to add to universe: '+err.message,'error');
   });
 }
+function bulkAddToCallList(){
+  const ids = [...selectedVoters];
+  if(!ids.length) return;
+  VotersAPI.bulkTag(ids, 'call_list').then(()=>{
+    showToast(`${ids.length} added to call list`);
+    clearSelection();
+  }).catch(err=>showToast('Failed to add to call list: '+err.message,'error'));
+}
+function bulkAddToMeet(){
+  const ids = [...selectedVoters];
+  if(!ids.length) return;
+  VotersAPI.bulkTag(ids, 'meet_list').then(()=>{
+    showToast(`${ids.length} added to meet list`);
+    clearSelection();
+  }).catch(err=>showToast('Failed to add to meet list: '+err.message,'error'));
+}
+function bulkLabelSelected(){
+  const ids = [...selectedVoters];
+  if(!ids.length) return;
+  showFormModal({
+    title: `Label ${ids.length} member${ids.length>1?'s':''}`,
+    submitLabel: 'Apply label',
+    fields: [ { key:'label_text', label:'Label', required:true, placeholder:'e.g. Donor, Volunteer, Key influencer', full:true } ],
+    onSubmit: (vals)=>{
+      VotersAPI.bulkLabel(ids, vals.label_text).then(()=>{
+        showToast(`Labelled ${ids.length} member${ids.length>1?'s':''} "${vals.label_text}"`);
+        clearSelection();
+      }).catch(err=>showToast('Failed to apply label: '+err.message,'error'));
+    }
+  });
+}
 function clearSelection(){
   selectedVoters.clear();
   document.querySelectorAll('#voters-tbody .row-check').forEach(cb=>cb.checked=false);
@@ -2556,39 +2811,26 @@ function setCopStatus(id, value){
 }
 
 // ── Voter Details & Voting History (merged — drives PVS) ──
-// Just toggling the inline "Voted" dropdown on an existing row — other fields
-// go through as null and the backend COALESCEs them against what's already there.
-function setVotingRecord(id, year, voted){
-  VotersAPI.setVotingHistory(id, { election_year:year, voted }).then(res=>{
-    const m = MEMBERS.find(x=>x.id===id);
-    if(m){
-      m._votingHistory = m._votingHistory || [];
-      const row = m._votingHistory.find(h=>String(h.election_year)===String(year));
-      if(row) row.voted = voted; else m._votingHistory.push({election_year:year, voted});
-      if(res && res.pvs!=null) m.pvs = res.pvs;
-    }
-    delete memberProfileCache[id];
-    renderMemberProfile(id);
-    showToast('Voting record saved — PVS recalculated');
-  }).catch(err=>{
-    showToast('Failed to save voting record: '+err.message,'error');
-  });
-}
+// Editing an existing row goes through addVotingYear(id, existingRow) instead
+// (opens the same modal, pre-filled) — there's no more inline dropdown.
 const VOTER_TYPES = ['Booth','Postal'];
 const VOTER_SUB_TYPES = ['Booth-Region','Booth-Other Region','Postal-Domestic','Postal-Foreign'];
 const VOTER_STATUSES = ['Active','Inactive','Blocked'];
-function addVotingYear(id){
+// existing: pre-fills the modal for editing a row already on file (called
+// from the ✎ icon near Status); omit to add a brand-new election year.
+function addVotingYear(id, existing){
+  const e = existing || {};
   showFormModal({
-    title:'Add voter & voting record',
+    title: existing ? 'Edit voter & voting record' : 'Add voter & voting record',
     submitLabel:'Save',
     fields:[
-      { key:'year',           label:'Election year', type:'number', required:true, placeholder:'e.g. 2022' },
-      { key:'voted',          label:'Voted?', type:'select', options:['Y','N'], value:'Y' },
-      { key:'voter_id',       label:'Voter ID', placeholder:'ICAI-issued for this election' },
-      { key:'voter_booth_no', label:'Booth no.', placeholder:'e.g. 142' },
-      { key:'voter_type',     label:'Voter type', type:'select', options:VOTER_TYPES, value:'Booth' },
-      { key:'voter_sub_type', label:'Voter sub-type', type:'select', options:VOTER_SUB_TYPES, value:'Booth-Region' },
-      { key:'voter_status',   label:'Voter status', type:'select', options:VOTER_STATUSES, value:'Active' },
+      { key:'year',           label:'Election year', type:'number', required:true, placeholder:'e.g. 2022', value: e.election_year || '' },
+      { key:'voted',          label:'Voted?', type:'select', options:['Y','N'], value: e.voted || 'Y' },
+      { key:'voter_id',       label:'Voter ID', placeholder:'ICAI-issued for this election', value: e.voter_id || '' },
+      { key:'voter_booth_no', label:'Booth no.', placeholder:'e.g. 142', value: e.voter_booth_no || '' },
+      { key:'voter_type',     label:'Voter type', type:'select', options:VOTER_TYPES, value: e.voter_type || 'Booth' },
+      { key:'voter_sub_type', label:'Voter sub-type', type:'select', options:VOTER_SUB_TYPES, value: e.voter_sub_type || 'Booth-Region' },
+      { key:'voter_status',   label:'Voter status', type:'select', options:VOTER_STATUSES, value: e.voter_status || 'Active' },
     ],
     onSubmit:(vals)=>{
       const yr = parseInt(vals.year);
@@ -2657,10 +2899,11 @@ function renderPrefs(){
   const q = (document.getElementById('prefs-search')||{}).value||'';
   let data = [...MEMBERS].filter(m=>addedToUniverse.has(m.id)).filter(m=>{
     const p = memberPrefs[m.id];
-    if(prefFilterActive && p !== prefFilterActive) return false;
+    if(prefFilters.size && !prefFilters.has(p)) return false;
     if(q && !m.name.toLowerCase().includes(q.toLowerCase())&&!m.org.toLowerCase().includes(q.toLowerCase())&&!m.city.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
+  data = applyPrefFacets(null, data);
   document.getElementById('pref-count').textContent = `${data.length} members`;
   const tbody = document.getElementById('prefs-tbody');
   tbody.innerHTML = data.map(m=>{
@@ -2678,6 +2921,81 @@ function renderPrefs(){
       </div></td>
     </tr>`;
   }).join('');
+  const sidebarEl = document.getElementById('pref-facet-sidebar');
+  if(sidebarEl && sidebarEl.classList.contains('open')) renderPrefFacetSidebar();
+}
+
+// ── Amazon-style facet popover for Preference / Assigned Preference (mirrors
+// My Universe's, computed client-side over the same loaded universe — the P1-P4
+// tier itself already has its own dedicated toggle row above, so it's not repeated here). ──
+const prefFacets = { city: new Set(), org: new Set(), catype: new Set(), firmType: new Set() };
+function applyPrefFacets(excludeFacet, data){
+  Object.keys(prefFacets).forEach(facet=>{
+    if(facet===excludeFacet) return;
+    if(prefFacets[facet].size) data = data.filter(m => prefFacets[facet].has(m[facet]));
+  });
+  return data;
+}
+function togglePrefFacet(facet, value, checked){
+  if(checked) prefFacets[facet].add(value); else prefFacets[facet].delete(value);
+  renderPrefs();
+}
+function resetPrefFacets(){
+  Object.values(prefFacets).forEach(s=>s.clear());
+  renderPrefs();
+}
+function renderPrefFacetGroup(facet, label, opts){
+  opts = opts || {};
+  const base = applyPrefFacets(facet, [...MEMBERS].filter(m=>addedToUniverse.has(m.id)));
+  const counts = new Map();
+  base.forEach(m=>{
+    const val = m[facet];
+    if(val==null || val==='' || val==='—' || (opts.excludeValues||[]).includes(val)) return;
+    counts.set(val, (counts.get(val)||0)+1);
+  });
+  const entries = [...counts.entries()].sort((a,b)=>b[1]-a[1]);
+  const rows = entries.map(([val,count])=>{
+    const text = (opts.labelMap && opts.labelMap[val]) || val;
+    const checked = prefFacets[facet].has(val) ? 'checked' : '';
+    const safeVal = String(val).replace(/'/g,"\\'");
+    const safeText = String(text).replace(/</g,'&lt;');
+    return `<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:2px 0">
+      <input type="checkbox" ${checked} onchange="togglePrefFacet('${facet}','${safeVal}',this.checked)" style="width:13px;height:13px;accent-color:var(--accent);flex-shrink:0">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeText}">${safeText}</span>
+      <span style="color:var(--text3);font-size:11px">${count}</span>
+    </label>`;
+  }).join('') || `<div style="font-size:11px;color:var(--text3);padding:4px 0">No matches</div>`;
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${label}</div>
+    <div style="display:flex;flex-direction:column;max-height:200px;overflow-y:auto">${rows}</div>
+  </div>`;
+}
+function renderPrefFacetSidebar(){
+  const el = document.getElementById('pref-facet-sidebar');
+  if(!el) return;
+  const activeCount = prefFacets.city.size + prefFacets.org.size + prefFacets.catype.size + prefFacets.firmType.size;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px">
+      <span style="font-size:12px;font-weight:600;color:var(--text2)">Filters${activeCount?` (${activeCount})`:''}</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <a onclick="resetPrefFacets()" style="font-size:11px;color:var(--accent);cursor:pointer">Clear all</a>
+        <a onclick="togglePrefFacetSidebar()" style="font-size:14px;color:var(--text3);cursor:pointer;line-height:1" title="Close">✕</a>
+      </div>
+    </div>
+    ${renderPrefFacetGroup('city','City')}
+    ${renderPrefFacetGroup('org','Organisation')}
+    ${renderPrefFacetGroup('firmType','Firm Type',{labelMap:{CA:'CA firm',NON_CA:'Non-CA firm'}})}
+    ${renderPrefFacetGroup('catype','Membership',{labelMap:{FCA:'Fellow (FCA)'},excludeValues:['ACA']})}
+  `;
+}
+function togglePrefFacetSidebar(){
+  const el = document.getElementById('pref-facet-sidebar');
+  const btn = document.getElementById('pref-filter-toggle-btn');
+  if(!el) return;
+  const open = el.classList.contains('open');
+  el.classList.toggle('open', !open);
+  if(btn) btn.classList.toggle('active', !open);
+  if(!open) renderPrefFacetSidebar();
 }
 
 // ── PREFERENCE HISTORY (per member, session-only; DB has no history table) ──
@@ -2716,39 +3034,23 @@ function setPref(id,pref,btn){
     confirmAction(`Change preference from ${PREF_SHORT[current]||'—'} to ${PREF_SHORT[target]||'—'}? Are you sure?`, applyPrefChange, 'Update preference');
   }
 }
-let prefFilterActive = null; // null = show all (none selected). Otherwise a single pref key e.g. 'p1'
+// Multi-select: e.g. {p1,p2} shows members who are P1 OR P2. Empty = show all.
+let prefFilters = new Set();
+let prefAssignedOnlyMode = false; // true = entered via "Assigned Preference" nav item
 function togglePrefFilter(btn,pref){
-  const wasOn = btn.classList.contains('on');
-  document.querySelectorAll('#page-preferences .filter-pref-btn').forEach(b=>b.classList.remove('on'));
-  if(wasOn){
-    prefFilterActive = null;
-  } else {
-    btn.classList.add('on');
-    prefFilterActive = pref;
-  }
+  if(prefFilters.has(pref)){ prefFilters.delete(pref); btn.classList.remove('on'); }
+  else { prefFilters.add(pref); btn.classList.add('on'); }
   renderPrefs();
 }
-
-// ── CITY / FIRM SUMMARY ──
-function getCityData(){
-  const cities = {};
-  MEMBERS.forEach(m=>{
-    if(!cities[m.city]) cities[m.city]={city:m.city,members:[],p1:0,p2:0,p3:0,p4:0,un:0};
-    cities[m.city].members.push(m);
-    const p = memberPrefs[m.id];
-    cities[m.city][p]++;
+// Sets prefFilters programmatically (used when switching between the
+// "Preference" and "Assigned Preference" nav entry points) and syncs the
+// filter buttons' visual .on state to match.
+function setPrefFilters(keys){
+  prefFilters = new Set(keys);
+  document.querySelectorAll('#page-preferences .filter-pref-btn').forEach(b=>{
+    const key = b.id.replace('pf-','');
+    b.classList.toggle('on', prefFilters.has(key));
   });
-  return Object.values(cities).sort((a,b)=>b.members.length-a.members.length);
-}
-function getFirmData(){
-  const firms = {};
-  MEMBERS.forEach(m=>{
-    if(!firms[m.org]) firms[m.org]={org:m.org,members:[],p1:0,p2:0,p3:0,p4:0,un:0};
-    firms[m.org].members.push(m);
-    const p = memberPrefs[m.id];
-    firms[m.org][p]++;
-  });
-  return Object.values(firms).sort((a,b)=>b.members.length-a.members.length);
 }
 
 // ── Shared pagination for the summary pages (City/Firm/Institute can run into
@@ -2770,31 +3072,36 @@ function renderSummaryPager(containerId, page, total, goToPageFn){
 }
 
 let cityPage = 1, cityTotal = 0, citySearchQ = '', _citySearchDebounce = null;
+let citySortCol = 'total', citySortDir = 'desc';
+const SUMMARY_SORT_COLS = ['total','in_universe','not_in_universe','p1','p2','p3','p4','un'];
 async function renderCityTable(){
   const tbody = document.getElementById('city-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
   try {
-    const { cities, total } = await DashboardAPI.city({ page: cityPage, limit: SUMMARY_PAGE_SIZE, search: citySearchQ });
+    const { cities, total } = await DashboardAPI.city({ page: cityPage, limit: SUMMARY_PAGE_SIZE, search: citySearchQ, sort: citySortCol, dir: citySortDir });
     cityTotal = total || 0;
     if(!cities || !cities.length){
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
       renderSummaryPager('city-pager', cityPage, cityTotal, 'cityGoToPage');
+      updateSummarySortArrows('city', citySortCol, citySortDir);
       return;
     }
     tbody.innerHTML = cities.map(c=>`<tr>
       <td><span style="color:var(--accent)">📍</span> <span style="cursor:pointer;color:var(--accent);font-weight:500" onclick="showPage('citydetail',{city:'${(c.city||'').replace(/'/g,"\\'")}'})">${c.city||'—'}</span></td>
-      <td><b>${c.total}</b></td>
-      <td><span class="count-box c1">● ${c.p1}</span></td>
-      <td><span class="count-box c2">● ${c.p2}</span></td>
-      <td><span class="count-box c3">● ${c.p3}</span></td>
-      <td><span class="count-box c4">● ${c.p4}</span></td>
-      <td><span class="count-box cu">○ ${c.un}</span></td>
-      <td><a class="open-link" onclick="showPage('citydetail',{city:'${(c.city||'').replace(/'/g,"\\'")}'})">Open ›</a></td>
+      <td><b>${parseInt(c.total)||0}</b></td>
+      <td><span class="count-box c1">● ${parseInt(c.in_universe)||0}</span></td>
+      <td><span class="count-box cu">○ ${parseInt(c.not_in_universe)||0}</span></td>
+      <td>${parseInt(c.p1)||0}</td>
+      <td>${parseInt(c.p2)||0}</td>
+      <td>${parseInt(c.p3)||0}</td>
+      <td>${parseInt(c.p4)||0}</td>
+      <td>${parseInt(c.un)||0}</td>
     </tr>`).join('');
     renderSummaryPager('city-pager', cityPage, cityTotal, 'cityGoToPage');
+    updateSummarySortArrows('city', citySortCol, citySortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function cityGoToPage(p){
@@ -2811,37 +3118,57 @@ function onCitySearchInput(){
     renderCityTable();
   }, 350);
 }
+function citySortBy(col){
+  if(citySortCol===col){ citySortDir = citySortDir==='desc'?'asc':'desc'; }
+  else { citySortCol = col; citySortDir = 'desc'; }
+  cityPage = 1;
+  renderCityTable();
+}
+// Shared by city/firm/institute — sets each column's arrow to ↑/↓ when active, ↕ otherwise.
+function updateSummarySortArrows(prefix, activeCol, dir){
+  SUMMARY_SORT_COLS.forEach(col=>{
+    const el = document.getElementById(prefix+'-sort-'+col);
+    if(!el) return;
+    const active = activeCol === col;
+    el.textContent = active ? (dir==='desc' ? '↓' : '↑') : '↕';
+    el.classList.toggle('active', active);
+  });
+}
 
-let firmPage = 1, firmTotal = 0, firmSearchQ = '', firmTypeFilter = '', _firmSearchDebounce = null;
+let firmPage = 1, firmTotal = 0, firmSearchQ = '', firmTypeFilter = '', firmStatusFilter = '', _firmSearchDebounce = null;
+let firmSortCol = 'total', firmSortDir = 'desc';
 async function renderFirmTable(){
   const tbody = document.getElementById('firm-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
   try {
-    const { firms, total } = await DashboardAPI.firm({ page: firmPage, limit: SUMMARY_PAGE_SIZE, search: firmSearchQ, type: firmTypeFilter });
+    const { firms, total } = await DashboardAPI.firm({ page: firmPage, limit: SUMMARY_PAGE_SIZE, search: firmSearchQ, type: firmTypeFilter, status: firmStatusFilter, sort: firmSortCol, dir: firmSortDir });
     firmTotal = total || 0;
     if(!firms || !firms.length){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
       renderSummaryPager('firm-pager', firmPage, firmTotal, 'firmGoToPage');
+      updateSummarySortArrows('firm', firmSortCol, firmSortDir);
       return;
     }
     tbody.innerHTML = firms.map(f=>{
       const safe = (f.firm||'').replace(/'/g,"\\'");
       const isCa = f.org_type==='CA';
       return `<tr>
-      <td><div style="font-weight:500;cursor:pointer;color:var(--accent)" onclick="showPage('firmdetail',{firm:'${safe}'})">${f.firm||'—'}</div></td>
+      <td><div style="font-weight:500;cursor:pointer;color:var(--accent)" onclick="showPage('firmdetail',{firm:'${safe}'})">${f.firm||'—'}</div>${isCa&&f.org_reg_no?`<div style="font-size:11px;color:var(--text3)">${f.org_reg_no}</div>`:''}</td>
       <td><span class="tag ${isCa?'ca':''}" style="font-size:10px">${f.org_type||'—'}</span></td>
-      <td><b>${f.total}</b></td>
-      <td><span class="count-box c1">● ${f.p1}</span></td>
-      <td><span class="count-box c2">● ${f.p2}</span></td>
-      <td><span class="count-box c3">● ${f.p3}</span></td>
-      <td><span class="count-box c4">● ${f.p4}</span></td>
-      <td><span class="count-box cu">○ ${f.un}</span></td>
-      <td><a class="open-link" onclick="showPage('firmdetail',{firm:'${safe}'})">Open ›</a></td>
+      <td><b>${parseInt(f.total)||0}</b></td>
+      <td><span class="count-box c1">● ${parseInt(f.in_universe)||0}</span></td>
+      <td><span class="count-box cu">○ ${parseInt(f.not_in_universe)||0}</span></td>
+      <td>${parseInt(f.p1)||0}</td>
+      <td>${parseInt(f.p2)||0}</td>
+      <td>${parseInt(f.p3)||0}</td>
+      <td>${parseInt(f.p4)||0}</td>
+      <td>${parseInt(f.un)||0}</td>
     </tr>`;}).join('');
     renderSummaryPager('firm-pager', firmPage, firmTotal, 'firmGoToPage');
+    updateSummarySortArrows('firm', firmSortCol, firmSortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function firmGoToPage(p){
@@ -2860,6 +3187,17 @@ function onFirmSearchInput(){
 }
 function onFirmTypeFilterChange(val){
   firmTypeFilter = val;
+  firmPage = 1;
+  renderFirmTable();
+}
+function onFirmStatusFilterChange(val){
+  firmStatusFilter = val;
+  firmPage = 1;
+  renderFirmTable();
+}
+function firmSortBy(col){
+  if(firmSortCol===col){ firmSortDir = firmSortDir==='desc'?'asc':'desc'; }
+  else { firmSortCol = col; firmSortDir = 'desc'; }
   firmPage = 1;
   renderFirmTable();
 }
@@ -2937,166 +3275,126 @@ function openAddInstituteModal(prefill){
 }
 
 // ── CITY DETAIL PAGE ──
-function renderCityDetail(cityName){
-  const members = MEMBERS.filter(m=>m.city===cityName);
-  const p1=members.filter(m=>memberPrefs[m.id]==='p1').length;
-  const p2=members.filter(m=>memberPrefs[m.id]==='p2').length;
-  const p3=members.filter(m=>memberPrefs[m.id]==='p3').length;
-  const p4=members.filter(m=>memberPrefs[m.id]==='p4').length;
-  const un=members.filter(m=>memberPrefs[m.id]==='un').length;
-  const firms=[...new Set(members.map(m=>m.org))];
+// Simplified detail page — just identity + member/in-universe/not-in-universe
+// counts, fetched fresh from the dashboard API (the city/firm/institute
+// master can run into the thousands, so this can't rely on whatever happens
+// to be in the client-side MEMBERS cache from the last list page viewed).
+// The full preference breakdown lives on the *summary* list pages instead.
+async function renderCityDetail(cityName){
   const container = document.getElementById('citydetail-content');
-  container.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <button class="btn-sm" onclick="showPage('citywise')">← City-wise</button>
-      <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">📍 ${cityName}</div>
-    </div>
-    <div class="detail-hero">
-      <div style="display:flex;gap:0;flex-wrap:wrap">
-        <div class="detail-stat"><div class="detail-stat-val">${members.length}</div><div class="detail-stat-label">Total members</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p1)">${p1}</div><div class="detail-stat-label">P1 Committed</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p2)">${p2}</div><div class="detail-stat-label">P2 Persuadable</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p3)">${p3}</div><div class="detail-stat-label">P3 Undecided</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p4)">${p4}</div><div class="detail-stat-label">&gt;P3</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--text3)">${firms.length}</div><div class="detail-stat-label">Firms present</div></div>
+  container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
+  try{
+    const { cities } = await DashboardAPI.city({ search: cityName, limit: 50 });
+    const c = (cities||[]).find(x=>x.city===cityName) || (cities||[])[0];
+    if(!c){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">City not found.</div>`; return; }
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <button class="btn-sm" onclick="showPage('citywise')">← City-wise</button>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">📍 ${c.city}</div>
       </div>
-    </div>
-    <div class="two-col" style="margin-bottom:20px">
-      <div class="card">
-        <div class="card-title">Preference split</div>
-        <canvas id="city-pref-chart" width="260" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-title">Firms in ${cityName}</div>
-        ${firms.map(f=>{
-          const fMembers=members.filter(m=>m.org===f);
-          return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
-            <span style="flex:1;font-size:13px;cursor:pointer;color:var(--accent)" onclick="showPage('firmdetail',{firm:'${f.replace(/'/g,'\\\'')}'})">${f}</span>
-            <span style="font-size:12px;font-weight:600;color:var(--text2)">${fMembers.length} member${fMembers.length!==1?'s':''}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Members in ${cityName}</div>
-      <table class="tbl">
-        <thead><tr><th>Name</th><th>Organisation</th><th>Role</th><th>Preference</th><th>PVS</th><th>Support</th><th>Status</th></tr></thead>
-        <tbody>${members.map(m=>`<tr>
-          <td><div class="name-cell">${avatarEl(m)}<div>${nameLink(m)}<div style="font-size:11px;color:var(--text3)">${m.mno}</div></div></div></td>
-          <td style="font-size:13px">${orgLink(m)}</td>
-          <td style="font-size:12px;color:var(--text2)">${m.role}</td>
-          <td>${prefPill(memberPrefs[m.id])}</td>
-          <td class="pvs">${m.pvs}</td>
-          <td><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span></td>
-          <td>${statusBadge(m.voterStatus)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>`;
-  // Draw chart
-  setTimeout(()=>drawPieChart('city-pref-chart',p1,p2,p3,p4,un),50);
+      <div class="detail-hero">
+        <div style="display:flex;gap:0;flex-wrap:wrap">
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(c.total)||0}</div><div class="detail-stat-label">Members</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(c.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(c.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
+        </div>
+      </div>`;
+  }catch(err){
+    container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
+  }
 }
 
 // ── FIRM DETAIL PAGE ──
-function renderFirmDetail(firmName){
-  const members = MEMBERS.filter(m=>m.org===firmName);
-  const p1=members.filter(m=>memberPrefs[m.id]==='p1').length;
-  const p2=members.filter(m=>memberPrefs[m.id]==='p2').length;
-  const p3=members.filter(m=>memberPrefs[m.id]==='p3').length;
-  const p4=members.filter(m=>memberPrefs[m.id]==='p4').length;
-  const un=members.filter(m=>memberPrefs[m.id]==='un').length;
-  const cities=[...new Set(members.map(m=>m.city))];
+// Plain ACTIVE/INACTIVE badge for org/institute status (uppercase enum — the
+// existing statusBadge() expects mixed-case 'Active', used for voter/contact status).
+function masterStatusBadge(s){
+  const active = (s==='ACTIVE');
+  return `<span style="display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;border:1px solid ${active?'var(--p1bd)':'var(--border2)'};background:${active?'var(--p1bg)':'var(--surface2)'};color:${active?'var(--p1)':'var(--text3)'}">${active?'Active':'Inactive'}</span>`;
+}
+async function renderFirmDetail(firmName){
   const container = document.getElementById('firmdetail-content');
-  container.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <button class="btn-sm" onclick="showPage('firmwise')">← Firm-wise</button>
-      <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">🏢 ${firmName}</div>
-    </div>
-    <div class="detail-hero">
-      <div style="display:flex;gap:0;flex-wrap:wrap">
-        <div class="detail-stat"><div class="detail-stat-val">${members.length}</div><div class="detail-stat-label">Total members</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p1)">${p1}</div><div class="detail-stat-label">P1 Committed</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p2)">${p2}</div><div class="detail-stat-label">P2 Persuadable</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p3)">${p3}</div><div class="detail-stat-label">P3 Undecided</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p4)">${p4}</div><div class="detail-stat-label">&gt;P3</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--text3)">${cities.length}</div><div class="detail-stat-label">Cities</div></div>
+  container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
+  try{
+    const { firms } = await DashboardAPI.firm({ search: firmName, limit: 50 });
+    const f = (firms||[]).find(x=>x.firm===firmName) || (firms||[])[0];
+    if(!f){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Organisation not found.</div>`; return; }
+    const isActive = f.org_status==='ACTIVE';
+    const safeFirmName = String(firmName).replace(/'/g,"\\'");
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <button class="btn-sm" onclick="showPage('firmwise')">← Organisation</button>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">🏢 ${f.firm}</div>
       </div>
-    </div>
-    <div class="two-col" style="margin-bottom:20px">
-      <div class="card">
-        <div class="card-title">Preference split</div>
-        <canvas id="firm-pref-chart" width="260" height="200"></canvas>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <div class="field-row" style="padding-right:16px"><div class="field-label">Registration no.</div><div class="field-val" style="font-size:13px">${f.org_reg_no||'—'}</div></div>
+          <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Type</div><div class="field-val" style="font-size:13px">${f.org_type||'—'}</div></div>
+          <div class="field-row" style="padding-right:16px;border-bottom:none">
+            <div class="field-label">Status</div>
+            <div class="field-val" style="font-size:13px;display:flex;align-items:center;gap:10px">
+              ${masterStatusBadge(f.org_status)}
+              <button class="btn-sm" style="font-size:11px" onclick="toggleOrgStatus(${f.org_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeFirmName}')">${isActive?'Mark Inactive':'Mark Active'}</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">Cities covered</div>
-        ${cities.map(c=>{
-          const cMembers=members.filter(m=>m.city===c);
-          return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
-            <span style="flex:1;font-size:13px;cursor:pointer;color:var(--accent)" onclick="showPage('citydetail',{city:'${c}'})">${c}</span>
-            <span style="font-size:12px;font-weight:600;color:var(--text2)">${cMembers.length} member${cMembers.length!==1?'s':''}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Members at ${firmName}</div>
-      <table class="tbl">
-        <thead><tr><th>Name</th><th>City</th><th>Role</th><th>Preference</th><th>PVS</th><th>Support</th><th>Status</th></tr></thead>
-        <tbody>${members.map(m=>`<tr>
-          <td><div class="name-cell">${avatarEl(m)}<div>${nameLink(m)}<div style="font-size:11px;color:var(--text3)">${m.mno}</div></div></div></td>
-          <td style="font-size:13px"><span style="cursor:pointer;color:var(--accent)" onclick="showPage('citydetail',{city:'${m.city}'})">${m.city}</span></td>
-          <td style="font-size:12px;color:var(--text2)">${m.role}</td>
-          <td>${prefPill(memberPrefs[m.id])}</td>
-          <td class="pvs">${m.pvs}</td>
-          <td><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span></td>
-          <td>${statusBadge(m.voterStatus)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>`;
-  setTimeout(()=>drawPieChart('firm-pref-chart',p1,p2,p3,p4,un),50);
+      <div class="detail-hero">
+        <div style="display:flex;gap:0;flex-wrap:wrap">
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(f.total)||0}</div><div class="detail-stat-label">Members</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(f.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(f.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
+        </div>
+      </div>`;
+  }catch(err){
+    container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
+  }
+}
+function toggleOrgStatus(orgId, newStatus, firmName){
+  confirmAction(`Mark this organisation as ${newStatus==='ACTIVE'?'Active':'Inactive'}?`, async ()=>{
+    try{
+      await OrgsAPI.updateStatus(orgId, newStatus);
+      showToast('Status updated');
+      renderFirmDetail(firmName);
+    }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
+  }, 'Update status');
 }
 
 // ── INSTITUTE SUMMARY + DETAIL ──
-function getInstituteData(){
-  const insts = {};
-  // seed with known institutes so empty ones still show
-  INSTITUTES.forEach(i=>{ insts[i.name]={name:i.name,type:i.type,city:i.city,members:[],p1:0,p2:0,p3:0,p4:0,un:0}; });
-  MEMBERS.forEach(m=>{
-    const name = m.institute;
-    if(!insts[name]) insts[name]={name:name,type:'—',city:'—',members:[],p1:0,p2:0,p3:0,p4:0,un:0};
-    insts[name].members.push(m);
-    insts[name][memberPrefs[m.id]]++;
-  });
-  return Object.values(insts).sort((a,b)=>b.members.length-a.members.length);
-}
-let institutePage = 1, instituteTotal = 0, instituteSearchQ = '', instituteTypeFilter = '', _instituteSearchDebounce = null;
+let institutePage = 1, instituteTotal = 0, instituteSearchQ = '', instituteTypeFilter = '', instituteStatusFilter = '', _instituteSearchDebounce = null;
+let instituteSortCol = 'total', instituteSortDir = 'desc';
 async function renderInstituteTable(){
   const tbody = document.getElementById('institute-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
   try {
-    const { institutes, total } = await DashboardAPI.institute({ page: institutePage, limit: SUMMARY_PAGE_SIZE, search: instituteSearchQ, type: instituteTypeFilter });
+    const { institutes, total } = await DashboardAPI.institute({ page: institutePage, limit: SUMMARY_PAGE_SIZE, search: instituteSearchQ, type: instituteTypeFilter, status: instituteStatusFilter, sort: instituteSortCol, dir: instituteSortDir });
     instituteTotal = total || 0;
     if(!institutes || !institutes.length){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
       renderSummaryPager('institute-pager', institutePage, instituteTotal, 'instituteGoToPage');
+      updateSummarySortArrows('institute', instituteSortCol, instituteSortDir);
       return;
     }
     tbody.innerHTML = institutes.map(it=>{
       const safe = (it.institute||'').replace(/'/g,"\\'");
+      const isActive = it.institute_status==='ACTIVE';
       return `<tr>
       <td><span style="color:var(--accent)">🎓</span> <span style="cursor:pointer;color:var(--accent);font-weight:500" onclick="showPage('institutedetail',{institute:'${safe}'})">${it.institute||'—'}</span></td>
       <td><span class="tag ca" style="font-size:10px">${it.institute_type||'—'}</span></td>
-      <td><b>${it.total}</b></td>
-      <td><span class="count-box c1">● ${it.p1}</span></td>
-      <td><span class="count-box c2">● ${it.p2}</span></td>
-      <td><span class="count-box c3">● ${it.p3}</span></td>
-      <td><span class="count-box c4">● ${it.p4}</span></td>
-      <td><span class="count-box cu">○ ${it.un}</span></td>
-      <td><a class="open-link" onclick="showPage('institutedetail',{institute:'${safe}'})">Open ›</a></td>
+      <td><b>${parseInt(it.total)||0}</b></td>
+      <td><span class="count-box c1">● ${parseInt(it.in_universe)||0}</span></td>
+      <td><span class="count-box cu">○ ${parseInt(it.not_in_universe)||0}</span></td>
+      <td>${parseInt(it.p1)||0}</td>
+      <td>${parseInt(it.p2)||0}</td>
+      <td>${parseInt(it.p3)||0}</td>
+      <td>${parseInt(it.p4)||0}</td>
+      <td>${parseInt(it.un)||0}</td>
+      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${it.institute_status||'—'}</span></td>
     </tr>`;}).join('');
     renderSummaryPager('institute-pager', institutePage, instituteTotal, 'instituteGoToPage');
+    updateSummarySortArrows('institute', instituteSortCol, instituteSortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function instituteGoToPage(p){
@@ -3118,107 +3416,60 @@ function onInstituteTypeFilterChange(val){
   institutePage = 1;
   renderInstituteTable();
 }
-function renderInstituteDetail(instName){
-  const meta = INSTITUTES.find(i=>i.name===instName) || {type:'—',city:'—'};
-  const members = MEMBERS.filter(m=>m.institute===instName);
-  const p1=members.filter(m=>memberPrefs[m.id]==='p1').length;
-  const p2=members.filter(m=>memberPrefs[m.id]==='p2').length;
-  const p3=members.filter(m=>memberPrefs[m.id]==='p3').length;
-  const p4=members.filter(m=>memberPrefs[m.id]==='p4').length;
-  const un=members.filter(m=>memberPrefs[m.id]==='un').length;
-  const active = members.filter(m=>m.voterStatus==='Active').length;
-  const container = document.getElementById('institutedetail-content');
-  container.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <button class="btn-sm" onclick="showPage('institutewise')">← Institute-wise</button>
-      <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">🎓 ${instName}</div>
-      <span class="tag ca" style="font-size:11px">${meta.type}</span>
-    </div>
-    <div class="detail-hero">
-      <div style="display:flex;gap:0;flex-wrap:wrap">
-        <div class="detail-stat"><div class="detail-stat-val">${members.length}</div><div class="detail-stat-label">Total alumni</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p1)">${active}</div><div class="detail-stat-label">Active</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p1)">${p1}</div><div class="detail-stat-label">P1 Committed</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p2)">${p2}</div><div class="detail-stat-label">P2 Persuadable</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p3)">${p3}</div><div class="detail-stat-label">P3 Undecided</div></div>
-        <div class="detail-stat"><div class="detail-stat-val" style="color:var(--p4)">${p4}</div><div class="detail-stat-label">&gt;P3</div></div>
-      </div>
-    </div>
-    <div class="two-col" style="margin-bottom:20px">
-      <div class="card">
-        <div class="card-title">Preference split</div>
-        <canvas id="inst-pref-chart" width="260" height="200"></canvas>
-      </div>
-      <div class="card">
-        <div class="card-title">Institute details</div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--text2)">Type</span><span style="font-size:13px;font-weight:600">${meta.type}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--text2)">City</span><span style="font-size:13px;font-weight:600">${meta.city}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0"><span style="font-size:13px;color:var(--text2)">Active alumni</span><span style="font-size:13px;font-weight:600">${active} / ${members.length}</span></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Alumni from ${instName}</div>
-      <table class="tbl">
-        <thead><tr><th>Name</th><th>Organisation</th><th>City</th><th>Preference</th><th>PVS</th><th>Status</th></tr></thead>
-        <tbody>${members.map(m=>`<tr>
-          <td><div class="name-cell">${avatarEl(m)}<div>${nameLink(m)}<div style="font-size:11px;color:var(--text3)">${m.mno}</div></div></div></td>
-          <td style="font-size:13px">${orgLink(m)}</td>
-          <td style="font-size:13px"><span style="cursor:pointer;color:var(--accent)" onclick="showPage('citydetail',{city:'${m.city}'})">${m.city}</span></td>
-          <td>${prefPill(memberPrefs[m.id])}</td>
-          <td class="pvs">${m.pvs}</td>
-          <td>${statusBadge(m.voterStatus)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>`;
-  setTimeout(()=>drawPieChart('inst-pref-chart',p1,p2,p3,p4,un),50);
+function onInstituteStatusFilterChange(val){
+  instituteStatusFilter = val;
+  institutePage = 1;
+  renderInstituteTable();
 }
-
-// ── PIE CHART (canvas) ──
-function drawPieChart(canvasId,p1,p2,p3,p4,un){
-  const canvas = document.getElementById(canvasId);
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const total = p1+p2+p3+p4+un;
-  if(total===0) return;
-  const slices = [
-    {val:p1,color:'#2A7A4B',label:'P1'},
-    {val:p2,color:'#8B6914',label:'P2'},
-    {val:p3,color:'#B84A2E',label:'P3'},
-    {val:p4,color:'#6B6560',label:'>P3'},
-    {val:un,color:'#C8C4BC',label:'Unassigned'},
-  ].filter(s=>s.val>0);
-
-  const W=canvas.width, H=canvas.height;
-  const cx=W/2-50, cy=H/2, r=Math.min(cx,cy)-16;
-  ctx.clearRect(0,0,W,H);
-
-  let startAngle = -Math.PI/2;
-  slices.forEach(s=>{
-    const angle = (s.val/total) * Math.PI*2;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,startAngle,startAngle+angle);
-    ctx.closePath();
-    ctx.fillStyle = s.color;
-    ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
-    startAngle += angle;
-  });
-
-  // center
-  ctx.beginPath(); ctx.arc(cx,cy,r*0.5,0,Math.PI*2);
-  ctx.fillStyle='#fff'; ctx.fill();
-  ctx.fillStyle='#1A1916'; ctx.font='bold 14px Inter'; ctx.textAlign='center';
-  ctx.fillText(total,cx,cy+5);
-
-  // legend
-  let ly=20;
-  slices.forEach(s=>{
-    ctx.fillStyle=s.color; ctx.fillRect(W-90,ly,12,12);
-    ctx.fillStyle='#5C5850'; ctx.font='11px Inter'; ctx.textAlign='left';
-    ctx.fillText(`${s.label} (${s.val})`,W-74,ly+10);
-    ly+=20;
-  });
+function instituteSortBy(col){
+  if(instituteSortCol===col){ instituteSortDir = instituteSortDir==='desc'?'asc':'desc'; }
+  else { instituteSortCol = col; instituteSortDir = 'desc'; }
+  institutePage = 1;
+  renderInstituteTable();
+}
+async function renderInstituteDetail(instName){
+  const container = document.getElementById('institutedetail-content');
+  container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
+  try{
+    const { institutes } = await DashboardAPI.institute({ search: instName, limit: 50 });
+    const it = (institutes||[]).find(x=>x.institute===instName) || (institutes||[])[0];
+    if(!it){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Institute not found.</div>`; return; }
+    const isActive = it.institute_status==='ACTIVE';
+    const safeInstName = String(instName).replace(/'/g,"\\'");
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <button class="btn-sm" onclick="showPage('institutewise')">← Institute-wise</button>
+        <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">🎓 ${it.institute}</div>
+        <span class="tag ca" style="font-size:11px">${it.institute_type||'—'}</span>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="field-row" style="border-bottom:none">
+          <div class="field-label">Status</div>
+          <div class="field-val" style="font-size:13px;display:flex;align-items:center;gap:10px">
+            ${masterStatusBadge(it.institute_status)}
+            <button class="btn-sm" style="font-size:11px" onclick="toggleInstituteStatus(${it.institute_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeInstName}')">${isActive?'Mark Inactive':'Mark Active'}</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-hero">
+        <div style="display:flex;gap:0;flex-wrap:wrap">
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(it.total)||0}</div><div class="detail-stat-label">Members</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(it.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
+          <div class="detail-stat"><div class="detail-stat-val">${parseInt(it.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
+        </div>
+      </div>`;
+  }catch(err){
+    container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
+  }
+}
+function toggleInstituteStatus(instituteId, newStatus, instName){
+  confirmAction(`Mark this institute as ${newStatus==='ACTIVE'?'Active':'Inactive'}?`, async ()=>{
+    try{
+      await InstitutesAPI.updateStatus(instituteId, newStatus);
+      showToast('Status updated');
+      renderInstituteDetail(instName);
+    }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
+  }, 'Update status');
 }
 
 // ── MEMBER PROFILE (full scroll layout) ──
@@ -3228,29 +3479,80 @@ function statusBadge(s){
   const active = (s==='Active');
   return `<span style="display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px;border:1px solid ${active?'var(--p1bd)':'var(--border2)'};background:${active?'var(--p1bg)':'var(--surface2)'};color:${active?'var(--p1)':'var(--text3)'}">${active?'● Active':'○ Inactive'}</span>`;
 }
-// Phone / Email history tables (real API data: m._phones, m._emails)
-function renderPhoneRows(m){
-  const phones = m._phones || [];
-  if(!phones.length) return '<tr><td colspan="4" style="color:var(--text3);font-size:12px;text-align:center;padding:10px">No phone numbers on file.</td></tr>';
-  return phones.map(p=>`<tr>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${p.phone_number_full||p.phone_number||'—'}</td>
-      <td><span class="tag ca" style="font-size:10px">${p.phone_type||'—'}</span></td>
-      <td>${p.is_whatsapp ? waLogo() : '—'}</td>
-      <td>${statusBadge(p.phone_status)}</td>
+// Unified contact table (real API data: m._phones, m._emails) — active contacts
+// first with a green active icon, inactive/old ones below with a grey one.
+// WhatsApp and "primary" are shown as small badges right next to the value
+// itself rather than their own columns.
+function renderContactRows(m, kind){
+  const phones = (m._phones||[]).map(p=>({
+    id: p.phone_id, kind:'phone', value: p.phone_number_full||p.phone_number, type: p.phone_type,
+    wa: !!p.is_whatsapp, primary: !!p.phone_is_primary, active: p.phone_status==='Active', mono: true,
+  }));
+  const emails = (m._emails||[]).map(e=>({
+    id: e.email_id, kind:'email', value: e.email_address, type: e.email_type, wa: false,
+    primary: !!e.email_is_primary, active: e.email_status==='Active', mono: false,
+  }));
+  const all = kind==='phone' ? phones : kind==='email' ? emails : [...phones, ...emails];
+  if(!all.length) return `<tr><td colspan="4" style="color:var(--text3);font-size:12px;text-align:center;padding:10px">No ${kind||'contact'} details on file.</td></tr>`;
+  all.sort((a,b)=> (b.active?1:0) - (a.active?1:0));
+  return all.map(c=>`<tr>
+      <td style="font-size:12px;${c.mono?"font-family:'IBM Plex Mono',monospace":''}">${c.value||'—'} ${c.wa?waLogo():''} ${c.primary?primaryBadge():''}</td>
+      <td><span class="tag ca" style="font-size:10px">${c.type||'—'}</span></td>
+      <td>${c.active
+        ? '<span style="color:var(--p1);font-size:12px;font-weight:600">🟢 Active</span>'
+        : '<span style="color:var(--text3);font-size:12px">⚪ Inactive</span>'}</td>
+      <td><span class="edit-icon" style="font-size:12px" title="${c.active?'Mark inactive':'Mark active'}" onclick="toggleContactStatus('${m.id}','${c.kind}',${c.id},${c.active})">Edit</span></td>
     </tr>`).join('');
 }
-function renderEmailRows(m){
-  const emails = m._emails || [];
-  if(!emails.length) return '<tr><td colspan="3" style="color:var(--text3);font-size:12px;text-align:center;padding:10px">No email addresses on file.</td></tr>';
-  return emails.map(e=>`<tr>
-      <td style="font-size:12px">${e.email_address||'—'}</td>
-      <td><span class="tag ca" style="font-size:10px">${e.email_type||'—'}</span></td>
-      <td>${statusBadge(e.email_status)}</td>
-    </tr>`).join('');
+function toggleContactStatus(memberId, kind, contactId, currentlyActive){
+  const next = currentlyActive ? 'Inactive' : 'Active';
+  confirmAction(`Mark this ${kind} as ${next}?`, async ()=>{
+    try{
+      if(kind==='phone') await VotersAPI.editPhone(memberId, contactId, { phone_status: next });
+      else await VotersAPI.editEmail(memberId, contactId, { email_status: next });
+      showToast('Status updated');
+      delete memberProfileCache[memberId];
+      renderMemberProfile(memberId);
+    }catch(err){
+      showToast('Failed to update status: '+err.message,'error');
+    }
+  }, 'Update status');
 }
-// Primary email "P" symbol
-function primaryEmailBadge(){
-  return `<span style="display:inline-block;width:15px;height:15px;line-height:15px;text-align:center;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:9px;font-weight:700;border:1px solid var(--accent-bd)">P</span>`;
+async function addContactEntry(memberId){
+  showFormModal({
+    title: 'Add contact',
+    submitLabel: 'Save',
+    fields: [
+      { key:'contact_kind', label:'Contact type', type:'select', options:['Phone','Email'], value:'Phone', onChangeShowHide:{'Email':{hide:['is_whatsapp']},'Phone':{show:['is_whatsapp']}} },
+      { key:'is_primary',   label:'Is primary?', type:'select', options:['No','Yes'], value:'No' },
+      { key:'value',        label:'Number / Address', required:true, placeholder:'e.g. +91 98765 43210 or name@example.com', full:true },
+      { key:'sub_type',     label:'Type', type:'select', options:['Personal','Official'], value:'Personal' },
+      { key:'is_whatsapp',  label:'On WhatsApp?', type:'select', options:['No','Yes'], value:'No' },
+    ],
+    onSubmit: async (vals)=>{
+      const isPhone = vals.contact_kind === 'Phone';
+      try{
+        if(isPhone){
+          await VotersAPI.addPhone(memberId, {
+            phone_number: vals.value, phone_type: vals.sub_type, is_whatsapp: vals.is_whatsapp==='Yes', is_primary: vals.is_primary==='Yes',
+          });
+        } else {
+          await VotersAPI.addEmail(memberId, {
+            email_address: vals.value, email_type: vals.sub_type==='Official' ? 'Company' : 'Personal', is_primary: vals.is_primary==='Yes',
+          });
+        }
+        showToast('Contact added');
+        delete memberProfileCache[memberId];
+        renderMemberProfile(memberId);
+      }catch(err){
+        showToast('Failed to add contact: '+err.message,'error');
+      }
+    }
+  });
+}
+// "Primary" inline badge — shown next to a phone/email value when it's the primary one.
+function primaryBadge(){
+  return `<span title="Primary" style="display:inline-block;width:15px;height:15px;line-height:15px;text-align:center;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:9px;font-weight:700;border:1px solid var(--accent-bd)">P</span>`;
 }
 // WhatsApp inline glyph (real WhatsApp brand mark, same path used by the quick-action button)
 function waLogo(){
@@ -3269,7 +3571,7 @@ function addressBlock(title, color, a, cityLink){
   return `<div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)">
       <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.06em">${title}</span>
-      <span class="edit-icon" style="font-size:12px;color:var(--text3)" onclick="confirmAction('Edit this address?')">✎ Edit</span>
+      <span class="edit-icon" style="font-size:12px;color:var(--text3)" onclick="confirmAction('Edit this address?')">Edit</span>
     </div>
     <div class="field-row" style="padding:10px 14px"><div class="field-label" style="width:130px;flex-shrink:0">Address line 1</div><div class="field-val" style="font-size:13px;flex:1;color:${a.line1?'var(--text)':'var(--text3)'}">${a.line1||'—'}</div></div>
     <div class="field-row" style="padding:10px 14px"><div class="field-label" style="width:130px;flex-shrink:0">Address line 2</div><div class="field-val" style="font-size:13px;flex:1;color:${a.line2?'var(--text)':'var(--text3)'}">${a.line2||'—'}</div></div>
@@ -3366,12 +3668,17 @@ async function renderMemberProfile(memberId){
   m._roles = payload.roles || [];
   m._activities = payload.activities || [];
   m._votingHistory = payload.voting_history || [];
+  m._tags = payload.tags || [];
+  m._labels = payload.labels || [];
   m.copStatus = v.cop_status || null;
   memberPrefs[m.id] = v.pref || 'un';
   memberDnd[m.id]   = !!v.dnd;
 
   const p = memberPrefs[m.id];
   const dnd = memberDnd[m.id];
+  const isCompetitor = m._tags.includes('competitor');
+  const onMeetList   = m._tags.includes('meet_list');
+  const onCallList   = m._tags.includes('call_list');
   // Build ACA/FCA year string
   const acaFcaStr = m.ca
     ? (m.acaYear ? `ACA: ${m.acaYear}` : '') + (m.acaYear && m.fcaYear ? ' → ' : '') + (m.fcaYear ? `FCA: ${m.fcaYear}` : (!m.fcaYear && m.acaYear ? ' (ACA, not yet FCA)' : ''))
@@ -3383,16 +3690,16 @@ async function renderMemberProfile(memberId){
       <div style="width:170px;flex-shrink:0">
         <div class="profile-section-nav" id="profile-sidenav">
           <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px">Sections</div>
-          <div class="psn-item active-section" onclick="scrollToSection('ps-identity',this)"><div class="num">1</div> Personal</div>
-          <div class="psn-item" onclick="scrollToSection('ps-voter',this)"><div class="num">2</div> Voter &amp; Voting</div>
-          <div class="psn-item" onclick="scrollToSection('ps-campaign',this)"><div class="num">3</div> Campaign</div>
-          <div class="psn-item" onclick="scrollToSection('ps-professional',this)"><div class="num">4</div> Professional &amp; Work</div>
-          <div class="psn-item" onclick="scrollToSection('ps-roles',this)"><div class="num">5</div> Committees &amp; Roles</div>
-          <div class="psn-item" onclick="scrollToSection('ps-education',this)"><div class="num">6</div> Educational</div>
-          <div class="psn-item" onclick="scrollToSection('ps-contact',this)"><div class="num">7</div> Contact</div>
-          <div class="psn-item" onclick="scrollToSection('ps-address',this)"><div class="num">8</div> Addresses</div>
-          <div class="psn-item" onclick="scrollToSection('ps-interactions',this)"><div class="num">9</div> Interactions</div>
-          <div class="psn-item" onclick="scrollToSection('ps-influence',this)"><div class="num">10</div> Influence</div>
+          <div class="psn-item active-section" onclick="scrollToSection('ps-identity',this)">Personal</div>
+          <div class="psn-item" onclick="scrollToSection('ps-contact',this)">Contact</div>
+          <div class="psn-item" onclick="scrollToSection('ps-voter',this)">Voter &amp; Voting</div>
+          <div class="psn-item" onclick="scrollToSection('ps-professional',this)">Professional &amp; Work</div>
+          <div class="psn-item" onclick="scrollToSection('ps-education',this)">Educational</div>
+          <div class="psn-item" onclick="scrollToSection('ps-campaign',this)">Campaign</div>
+          <div class="psn-item" onclick="scrollToSection('ps-roles',this)">Committees &amp; Roles</div>
+          <div class="psn-item" onclick="scrollToSection('ps-address',this)">Addresses</div>
+          <div class="psn-item" onclick="scrollToSection('ps-interactions',this)">Interactions</div>
+          <div class="psn-item" onclick="scrollToSection('ps-influence',this)">Influence</div>
         </div>
       </div>
 
@@ -3404,16 +3711,25 @@ async function renderMemberProfile(memberId){
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <span style="font-size:20px;font-weight:700;letter-spacing:-.02em">${m.name}</span>
               ${dnd?'<span style="background:#FBEEE9;color:#9A3820;border:1px solid #F0B8A4;border-radius:6px;font-size:10px;font-weight:700;padding:2px 8px">🚫 DND</span>':''}
+              ${isCompetitor?'<span style="background:#FDEDEC;color:#A23B2E;border:1px solid #F2B8AE;border-radius:6px;font-size:10px;font-weight:700;padding:2px 8px">🎯 Competitor</span>':''}
+              ${onCallList?'<span class="tag ca">📞 Call list</span>':''}
+              ${onMeetList?'<span class="tag ca">🤝 Meet list</span>':''}
             </div>
             <div class="profile-badges">
               <span class="tag ca">${m.catype} · ${m.mno}</span>
+              <span class="tag ca">${m.gender}</span>
               <span class="tag ca">${m.region}</span>
               ${m.acaYear?`<span class="tag ca">${acaFcaStr}</span>`:''}
               ${prefPill(p)}
               <span class="tag ${SUPPORT_CLASS[m.support]||'unknown'}">${m.support}</span>
+              ${(m._labels||[]).map(l=>`<span class="tag" style="background:#EEF0FA;color:#3A4E9A;border-color:#B8C0E4">🏷️ ${String(l.label_text).replace(/</g,'&lt;')}</span>`).join('')}
             </div>
           </div>
-          <button class="btn-sm" onclick="showPage('allvoters')" style="flex-shrink:0">← Back</button>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="btn-sm" onclick="toggleDndProfile('${m.id}')" style="${dnd?'background:#FBEEE9;color:#9A3820;border-color:#F0B8A4':''}">${dnd?'🚫 DND — click to remove':'Set DND'}</button>
+            <button class="btn-sm" onclick="toggleMemberTag('${m.id}','competitor',${!isCompetitor})" style="${isCompetitor?'background:#FDEDEC;color:#A23B2E;border-color:#F2B8AE':''}">${isCompetitor?'🎯 Competitor — click to remove':'Mark as competitor'}</button>
+            <button class="btn-sm" onclick="showPage('allvoters')">← Back</button>
+          </div>
         </div>
         <!-- Score strip -->
         <div style="display:flex;gap:10px;margin-bottom:18px">
@@ -3426,46 +3742,41 @@ async function renderMemberProfile(memberId){
         <div style="margin-bottom:18px">
           <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">What to do with this voter</div>
           <div class="voter-action-panel">
-            <button class="va-btn va-call" onclick="quickCall('${m.phone||''}')">
+            <button class="va-btn va-call" onclick="quickCall('${m.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               Call
             </button>
-            <button class="va-btn va-wa" onclick='quickWhatsapp(${JSON.stringify({phone:m.phone||"",phone2:m.phone2||"",phone3:m.phone3||"",whatsapp:m.whatsapp||"",whatsappPhoneIdx:m.whatsappPhoneIdx,name:m.name})})'>
+            <button class="va-btn va-wa" onclick="quickWhatsapp('${m.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.74.46 3.43 1.32 4.92L2.05 22l5.3-1.39a9.86 9.86 0 0 0 4.69 1.19h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"/></svg>
               WhatsApp
             </button>
-            <button class="va-btn va-email" onclick="quickEmail('${m.email||''}')">
+            <button class="va-btn va-email" onclick="quickEmail('${m.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6c0-1.1-.9-2-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6z"/><polyline points="22,6 12,13 2,6"/></svg>
               Email
             </button>
-            <button class="va-btn va-meet" onclick='quickMeet(${JSON.stringify({name:m.name})})'>
+            <button class="va-btn va-meet" onclick="toggleMemberTag('${m.id}','meet_list',${!onMeetList})">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              Meet
+              ${onMeetList?'✓ On meet list':'Add to meet list'}
             </button>
-            <button class="va-btn va-todo" onclick='quickAddTodo(${JSON.stringify({name:m.name})})'>
+            <button class="va-btn va-todo" onclick="toggleMemberTag('${m.id}','call_list',${!onCallList})">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              Add to to-do
+              ${onCallList?'✓ On call list':'Add to call list'}
             </button>
           </div>
         </div>
 
-        <!-- 1. PERSONAL -->
-        <!-- 1. PERSONAL DETAILS -->
+        <!-- PERSONAL DETAILS -->
         <div class="card section-anchor" id="ps-identity" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
-            <div class="section-head" style="margin:0">1 — Personal Details</div>
-            <button class="btn-sm" style="font-size:11px" onclick="togglePersonalEdit('${m.id}')">${personalEditOpen[m.id]?'✓ Done':'✎ Edit'}</button>
+            <div class="section-head" style="margin:0">Personal Details</div>
+            <button class="btn-sm" style="font-size:11px" onclick="togglePersonalEdit('${m.id}')">${personalEditOpen[m.id]?'Done':'Edit'}</button>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Full name</div><div class="field-val" style="font-size:13px">${m.name} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Membership no. <span class="tag sys">SYSTEM</span></div><div class="field-val" style="font-size:13px">${m.mno} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Gender <span class="tag sys">SYSTEM</span></div><div class="field-val" style="font-size:13px">${m.gender} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Date of birth <span class="tag sys">SYSTEM</span></div><div class="field-val" style="font-size:13px">${m.dob} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">ACA Year <span class="tag sys">SYSTEM</span></div><div class="field-val" style="font-size:13px">${m.acaYear||'—'} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">FCA Year <span class="tag sys">SYSTEM</span></div><div class="field-val" style="font-size:13px">${m.fcaYear||'Not yet FCA'} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Region / Branch</div><div class="field-val" style="font-size:13px">${m.region} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Age (derived)</div><div class="field-val" style="font-size:13px">${m.age} <span class="lock-icon">🔒</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">COP status</div><div class="field-val" style="font-size:13px">
+            <div class="field-row" style="padding-right:16px"><div class="field-label">Membership no.</div><div class="field-val" style="font-size:13px">${m.mno} <span class="lock-icon">🔒</span></div></div>
+            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">DOB / Age</div><div class="field-val" style="font-size:13px">${m.dob} (${m.age}) <span class="lock-icon">🔒</span></div></div>
+            <div class="field-row" style="padding-right:16px"><div class="field-label">ACA / FCA</div><div class="field-val" style="font-size:13px">${m.acaYear||'—'} / ${m.fcaYear||'—'} <span class="lock-icon">🔒</span></div></div>
+            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Region / Branch</div><div class="field-val" style="font-size:13px">${m.region} <span class="edit-icon">Edit</span></div></div>
+            <div class="field-row" style="padding-right:16px;border-bottom:none;grid-column:span 2"><div class="field-label">COP status</div><div class="field-val" style="font-size:13px">
               ${personalEditOpen[m.id] ? `
               <select onchange="setCopStatus('${m.id}', this.value)" style="padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
                 <option value="" ${!m.copStatus?'selected':''}>— Not set —</option>
@@ -3474,19 +3785,32 @@ async function renderMemberProfile(memberId){
                 <option value="Part Time" ${m.copStatus==='Part Time'?'selected':''}>Part Time</option>
               </select>` : (m.copStatus || '— Not set —')}
             </div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">DND flag</div><div class="field-val" style="font-size:13px">
-              ${personalEditOpen[m.id]
-                ? `<button onclick="toggleDndProfile('${m.id}')" style="padding:3px 10px;border:1px solid ${dnd?'#F0B8A4':'var(--border2)'};border-radius:4px;background:${dnd?'#FBEEE9':'var(--surface)'};color:${dnd?'#9A3820':'var(--text2)'};font-size:12px;cursor:pointer">${dnd?'🚫 DND — click to remove':'No DND — click to set'}</button>`
-                : (dnd ? '🚫 DND' : 'No DND')}
-            </div></div>
           </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">🔒 fields are pulled from the ICAI master record and cannot be edited. ${personalEditOpen[m.id]?'':'Click ✎ Edit above to change COP status or DND.'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">🔒 fields are pulled from the ICAI master record and cannot be edited.</div>
         </div>
 
-        <!-- 2. VOTER DETAILS & VOTING HISTORY (merged — same grain: one row per election year) -->
+        <!-- CONTACT DETAILS AND HISTORY (phone and email shown as separate sections) -->
+        <div class="card section-anchor" id="ps-contact" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div class="section-head" style="margin:0">Contact Details and History</div>
+            <button class="btn-sm primary" style="font-size:11px" onclick="addContactEntry('${m.id}')">+ Add contact</button>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Phone</div>
+          <table class="history-tbl" style="margin-bottom:18px">
+            <thead><tr><th>Contact</th><th style="width:90px">Type</th><th style="width:110px">Status</th><th style="width:50px"></th></tr></thead>
+            <tbody>${renderContactRows(m,'phone')}</tbody>
+          </table>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Email</div>
+          <table class="history-tbl">
+            <thead><tr><th>Contact</th><th style="width:90px">Type</th><th style="width:110px">Status</th><th style="width:50px"></th></tr></thead>
+            <tbody>${renderContactRows(m,'email')}</tbody>
+          </table>
+        </div>
+
+        <!-- VOTER DETAILS & VOTING HISTORY (merged — same grain: one row per election year) -->
         <div class="card section-anchor" id="ps-voter" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div class="section-head" style="margin:0">2 — Voter Details &amp; Voting History</div>
+            <div class="section-head" style="margin:0">Voter Details &amp; Voting History</div>
             <button class="btn-sm primary" style="font-size:11px" onclick="addVotingYear('${m.id}')">+ Add year</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:10px">One row per election year — voter-roll detail plus whether they voted. Voting directly affects PVS (Regular voter = +150, voted once = +80).</div>
@@ -3497,9 +3821,10 @@ async function renderMemberProfile(memberId){
               <th>Booth no.</th>
               <th>Type</th>
               <th>Sub-type</th>
-              <th>Status</th>
-              <th style="width:140px">Voted</th>
+              <th style="width:110px">Voted</th>
               <th>Last updated</th>
+              <th>Status</th>
+              <th style="width:50px"></th>
             </tr></thead>
             <tbody>
               ${(m._votingHistory && m._votingHistory.length)
@@ -3509,16 +3834,12 @@ async function renderMemberProfile(memberId){
                     <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${h.voter_booth_no||'—'}</td>
                     <td style="font-size:12px">${h.voter_type||'—'}</td>
                     <td style="font-size:12px">${h.voter_sub_type||'—'}</td>
-                    <td style="font-size:12px">${statusBadge(h.voter_status)}</td>
-                    <td>
-                      <select onchange="setVotingRecord('${m.id}', ${h.election_year}, this.value)" style="padding:3px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
-                        <option value="Y" ${h.voted==='Y'?'selected':''}>Voted (Y)</option>
-                        <option value="N" ${h.voted==='N'?'selected':''}>Did not vote (N)</option>
-                      </select>
-                    </td>
+                    <td style="font-size:12px">${h.voted==='Y' ? 'Voted' : 'Did not vote'}</td>
                     <td style="font-size:12px;color:var(--text2)">${h.updated_at||'—'}${h.updated_by_name?` · ${h.updated_by_name}`:''}</td>
+                    <td style="font-size:12px">${statusBadge(h.voter_status)}</td>
+                    <td><span class="edit-icon" style="font-size:12px" title="Edit" onclick='addVotingYear("${m.id}",${JSON.stringify(h).replace(/'/g,"&apos;")})'>Edit</span></td>
                   </tr>`).join('')
-                : '<tr><td colspan="8" style="color:var(--text3);font-size:12px;text-align:center;padding:12px">No voter/voting records yet. Add a year to start tracking.</td></tr>'}
+                : '<tr><td colspan="9" style="color:var(--text3);font-size:12px;text-align:center;padding:12px">No voter/voting records yet. Add a year to start tracking.</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -3526,8 +3847,8 @@ async function renderMemberProfile(memberId){
         <!-- 3. CAMPAIGN DETAILS -->
         <div class="card section-anchor" id="ps-campaign" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div class="section-head" style="margin:0">3 — Campaign Details</div>
-            <button class="btn-sm" style="font-size:11px" onclick="togglePrefEdit('${m.id}')">${prefEditOpen[m.id]?'✓ Done':'✎ Edit preference'}</button>
+            <div class="section-head" style="margin:0">Campaign Details</div>
+            <button class="btn-sm" style="font-size:11px" onclick="togglePrefEdit('${m.id}')">${prefEditOpen[m.id]?'Done':'Edit preference'}</button>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
             <div class="field-row" style="padding-right:16px;grid-column:span 2">
@@ -3544,7 +3865,7 @@ async function renderMemberProfile(memberId){
                 </div>` : `<span style="font-size:11px;color:var(--text3);margin-left:10px">Click “Edit preference” to change</span>`}
               </div>
             </div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Support status</div><div class="field-val" style="font-size:13px"><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span> <span class="edit-icon">✎</span></div></div>
+            <div class="field-row" style="padding-right:16px"><div class="field-label">Support status</div><div class="field-val" style="font-size:13px"><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span> <span class="edit-icon">Edit</span></div></div>
             <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">PVS</div><div class="field-val pvs">${m.pvs}</div></div>
             <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Universe</div><div class="field-val" style="font-size:13px"><span class="tag ca">${addedToUniverse.has(m.id)?'★ L1 — In universe':'Not in universe'}</span></div></div>
             <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border);border-bottom:none"><div class="field-label">Voter status</div><div class="field-val" style="font-size:13px">${statusBadge(m.voterStatus)}</div></div>
@@ -3561,7 +3882,7 @@ async function renderMemberProfile(memberId){
         <!-- 4. PROFESSIONAL DETAILS & WORK HISTORY -->
         <div class="card section-anchor" id="ps-professional" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div class="section-head" style="margin:0">4 — Professional Details &amp; Work History</div>
+            <div class="section-head" style="margin:0">Professional Details &amp; Work History</div>
             <button class="btn-sm primary" style="font-size:11px" onclick="addWorkEntry('${m.id}')">+ Add entry</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:10px">First row shows the current firm relationship. Add a new entry with status "Active" to switch firms — the previous active entry is closed out automatically.</div>
@@ -3573,8 +3894,9 @@ async function renderMemberProfile(memberId){
                 <th>Firm / Organisation</th>
                 <th>Designation</th>
                 <th style="width:90px">Type</th>
-                <th style="width:110px">Status</th>
                 <th>Remark</th>
+                <th style="width:110px">Status</th>
+                <th style="width:50px"></th>
               </tr>
             </thead>
             <tbody id="work-tbody-${m.id}">
@@ -3586,21 +3908,20 @@ async function renderMemberProfile(memberId){
         <!-- 5. COMMITTEES & ROLES -->
         <div class="card section-anchor" id="ps-roles" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div class="section-head" style="margin:0">5 — Committees &amp; Roles</div>
-            <span class="edit-icon" style="font-size:12px;color:var(--text3)" onclick="confirmAction('Edit committee &amp; role details?')">✎ Edit</span>
+            <div class="section-head" style="margin:0">Committees &amp; Roles</div>
+            <span class="edit-icon" style="font-size:12px;color:var(--text3)" onclick="confirmAction('Edit committee &amp; role details?')">Edit</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Branch committee</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='Branch Committee')||{}).role_value||'—'}</div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">ICAI committee</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='ICAI Committee')||{}).role_value||'—'}</div></div>
-            <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">CPE speaker</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='CPE Speaker')||{}).role_value||'Not noted'}</div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border);border-bottom:none"><div class="field-label">Specialization</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='Specialization')||{}).role_value||'—'}</div></div>
+            <div class="field-row" style="padding-right:16px"><div class="field-label">ICAI committee</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='ICAI Committee')||{}).role_value||'—'}</div></div>
+            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">CPE speaker</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='CPE Speaker')||{}).role_value||'Not noted'}</div></div>
+            <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Specialization</div><div class="field-val" style="font-size:13px">${(m._roles.find(r=>r.role_type==='Specialization')||{}).role_value||'—'}</div></div>
           </div>
         </div>
 
-        <!-- 6. EDUCATIONAL DETAILS -->
+        <!-- EDUCATIONAL DETAILS -->
         <div class="card section-anchor" id="ps-education" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div class="section-head" style="margin:0">6 — Educational Details</div>
+            <div class="section-head" style="margin:0">Educational Details</div>
             <button class="btn-sm primary" style="font-size:11px" onclick="addEducationEntry('${m.id}')">+ Add institution</button>
           </div>
           <table class="history-tbl" id="edu-tbl-${m.id}">
@@ -3611,6 +3932,7 @@ async function renderMemberProfile(memberId){
                 <th>Qualification / Degree</th>
                 <th style="width:130px">Period / Year</th>
                 <th style="width:110px">Status</th>
+                <th style="width:50px"></th>
               </tr>
             </thead>
             <tbody>
@@ -3620,41 +3942,10 @@ async function renderMemberProfile(memberId){
           <div style="font-size:11px;color:var(--text3);margin-top:10px">Use <strong>+ Add institution</strong> to add schools, coaching classes, or other qualifications.</div>
         </div>
 
-        <!-- 7. CONTACT -->
-        <div class="card section-anchor" id="ps-contact" style="margin-bottom:14px">
-          <div class="section-head">7 — Contact Details</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Email 1 ${m.primaryEmailIdx===1?primaryEmailBadge():''}</div><div class="field-val" style="font-size:13px">${m.email||'—'} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Email 2 ${m.primaryEmailIdx===2?primaryEmailBadge():''}</div><div class="field-val" style="font-size:13px">${m.email2||'—'} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Email 3 ${m.primaryEmailIdx===3?primaryEmailBadge():''}</div><div class="field-val" style="font-size:13px">${m.email3||'—'} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">LinkedIn</div><div class="field-val" style="font-size:13px">${m.linkedin||'—'} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Mobile 1${m.primaryPhoneIdx===1?' (P)':''}</div><div class="field-val" style="font-size:13px">${m.phone||'—'} ${waIcon(m,1)} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Mobile 2${m.primaryPhoneIdx===2?' (P)':''}</div><div class="field-val" style="font-size:13px">${m.phone2||'—'} ${waIcon(m,2)} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Mobile 3${m.primaryPhoneIdx===3?' (P)':''}</div><div class="field-val" style="font-size:13px">${m.phone3||'—'} ${waIcon(m,3)} <span class="edit-icon">✎</span></div></div>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin:8px 0;padding-top:8px;border-top:1px solid var(--border)">P = primary email · (P) = primary mobile · ${waLogo()} = number is on WhatsApp.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Phone history</div>
-              <table class="history-tbl">
-                <thead><tr><th>Number</th><th style="width:64px">Type</th><th style="width:40px">WA</th><th style="width:80px">Status</th></tr></thead>
-                <tbody>${renderPhoneRows(m)}</tbody>
-              </table>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">Email history</div>
-              <table class="history-tbl">
-                <thead><tr><th>Address</th><th style="width:84px">Type</th><th style="width:80px">Status</th></tr></thead>
-                <tbody>${renderEmailRows(m)}</tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- 8. ADDRESSES -->
+        <!-- ADDRESSES -->
         <div class="card section-anchor" id="ps-address" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div class="section-head" style="margin:0">8 — Addresses</div>
+            <div class="section-head" style="margin:0">Addresses</div>
           </div>
           <div style="color:var(--text3);font-size:12px;padding:8px 0">No address records on file for this member.</div>
         </div>
@@ -3662,7 +3953,7 @@ async function renderMemberProfile(memberId){
         <!-- 9. INTERACTIONS -->
         <div class="card section-anchor" id="ps-interactions" style="margin-bottom:14px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <div class="section-head" style="margin:0">9 — Interactions</div>
+            <div class="section-head" style="margin:0">Interactions</div>
             <button class="btn-sm primary" onclick="openLogInteraction('${m.id}')">+ Log interaction</button>
           </div>
           ${renderInteractions(m)}
@@ -3670,19 +3961,18 @@ async function renderMemberProfile(memberId){
 
         <!-- 10. INFLUENCE -->
         <div class="card section-anchor" id="ps-influence" style="margin-bottom:14px">
-          <div class="section-head">10 — Influence &amp; Network</div>
+          <div class="section-head">Influence &amp; Network</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Influence score</div><div class="field-val" style="font-size:13px">${Math.round(m.pvs/10)} <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Network reach</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Known to influence</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">✎</span></div></div>
-            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border);border-bottom:none"><div class="field-label">Notes</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">✎</span></div></div>
+            <div class="field-row" style="padding-right:16px"><div class="field-label">Influence score</div><div class="field-val" style="font-size:13px">${Math.round(m.pvs/10)} <span class="edit-icon">Edit</span></div></div>
+            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">Network reach</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">Edit</span></div></div>
+            <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Known to influence</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">Edit</span></div></div>
+            <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border);border-bottom:none"><div class="field-label">Notes</div><div class="field-val" style="font-size:13px">— <span class="edit-icon">Edit</span></div></div>
           </div>
         </div>
 
         <div style="display:flex;gap:16px;padding:8px 0;font-size:11px;color:var(--text3)">
-          <div>✎ Editable field</div>
+          <div>"Edit" = editable field</div>
           <div>🔒 Locked — from ICAI master record</div>
-          <div>SYSTEM = cannot be manually changed</div>
         </div>
       </div>
     </div>`;
@@ -3694,7 +3984,7 @@ const WORK_STATUS_COLOR = { Active:'var(--p1)', Inactive:'var(--text3)', 'Not a 
 function renderWorkRows(memberId){
   const m = MEMBERS.find(x=>x.id===memberId);
   if(!m || !m._work || !m._work.length){
-    return `<tr><td colspan="7" style="color:var(--text3);font-size:12px;font-style:italic;text-align:center;padding:14px">No work history on file.</td></tr>`;
+    return `<tr><td colspan="8" style="color:var(--text3);font-size:12px;font-style:italic;text-align:center;padding:14px">No work history on file.</td></tr>`;
   }
   return m._work.map(e=>{
     const isCurrent = e.work_status==='Active';
@@ -3712,38 +4002,43 @@ function renderWorkRows(memberId){
       <td>${orgCell}</td>
       <td>${e.designation||'—'}</td>
       <td><span class="tag ca" style="font-size:10px">${e.work_type||'—'}</span></td>
-      <td>${status}</td>
       <td style="font-size:12px;color:var(--text2)">${e.remark||'—'}</td>
+      <td>${status}</td>
+      <td><span class="edit-icon" style="font-size:12px" title="Edit" onclick='addWorkEntry("${m.id}",${JSON.stringify(e).replace(/'/g,"&apos;")})'>Edit</span></td>
     </tr>`;
   }).join('');
 }
 const WORK_DESIGNATIONS = ['Partner','Senior Partner','Engagement Partner','Managing Partner'];
 const WORK_STATUSES = ['Active','Inactive','Not a member','Expired'];
-async function addWorkEntry(memberId){
+// existing: pre-fills + edits a row already on file (called from the ✎ icon
+// near Status); omit to add a brand-new work history entry.
+async function addWorkEntry(memberId, existing){
+  const e = existing || {};
   showFormModal({
-    title: 'Add work history entry',
+    title: existing ? 'Edit work history entry' : 'Add work history entry',
     submitLabel: 'Save',
     fields: [
       { key:'org_id', label:'Firm / Organisation', type:'searchselect', required:true, full:true,
         placeholder:'Search by firm name or registration no…',
+        value: e.org_id || '', displayValue: e.org_name || '',
         searchFn: async (q)=>{
           if(!q || q.length<2) return [];
           const { orgs } = await OrgsAPI.list(q);
           return orgs.map(o=>({ id:o.org_id, label:o.org_name, sublabel:[o.org_reg_no,o.org_type].filter(Boolean).join(' · ') }));
         }
       },
-      { key:'designation', label:'Designation', type:'select', required:true, options:WORK_DESIGNATIONS, value:WORK_DESIGNATIONS[0] },
-      { key:'work_type',   label:'Type', type:'select', options:['Employment','Articleship','Practice'], value:'Employment' },
-      { key:'work_status', label:'Status', type:'select', options:WORK_STATUSES, value:'Active' },
-      { key:'from_year',   label:'From year', type:'number', required:true, placeholder:'e.g. 2020' },
-      { key:'to_year',     label:'To year (if not active)', type:'number', placeholder:'e.g. 2023' },
-      { key:'remark',      label:'Remark', placeholder:'Optional note', full:true },
+      { key:'designation', label:'Designation', type:'select', required:true, options:WORK_DESIGNATIONS, value: e.designation || WORK_DESIGNATIONS[0] },
+      { key:'work_type',   label:'Type', type:'select', options:['Employment','Articleship','Practice'], value: e.work_type || 'Employment' },
+      { key:'work_status', label:'Status', type:'select', options:WORK_STATUSES, value: e.work_status || 'Active', onChangeFillYear:'to_year' },
+      { key:'from_year',   label:'From year', type:'number', required:true, placeholder:'e.g. 2020', value: e.from_year || '' },
+      { key:'to_year',     label:'To year (if not active — defaults to this year, editable)', type:'number', placeholder:'e.g. 2023', value: e.to_year || '' },
+      { key:'remark',      label:'Remark', placeholder:'Optional note', full:true, value: e.remark || '' },
     ],
     onSubmit: async (vals)=>{
       if(!vals.org_id){ showToast('Pick a valid organisation','error'); return; }
       if(vals.work_status!=='Active' && !vals.to_year){ showToast('To year is required unless status is Active','error'); return; }
       try{
-        await VotersAPI.addWork(memberId, {
+        const payload = {
           org_id:      vals.org_id,
           designation: vals.designation,
           from_year:   vals.from_year,
@@ -3751,8 +4046,10 @@ async function addWorkEntry(memberId){
           work_type:   vals.work_type,
           work_status: vals.work_status,
           remark:      vals.remark || null,
-        });
-        showToast('Work history added');
+        };
+        if(existing && existing.wh_id) await VotersAPI.editWork(memberId, existing.wh_id, payload);
+        else await VotersAPI.addWork(memberId, payload);
+        showToast(existing ? 'Work history updated' : 'Work history added');
         delete memberProfileCache[memberId];
         renderMemberProfile(memberId);
         upsertMemberCurrentFirmHint(memberId);
@@ -3785,6 +4082,7 @@ function renderEduRows(memberId, m){
       <td>${e.qualification_name||'—'}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${period||'—'}</td>
       <td><span style="font-size:12px;color:var(--text2)">${e.edu_status||'—'}</span></td>
+      <td><span class="edit-icon" style="font-size:12px" title="Edit" onclick='addEducationEntry("${m.id}",${JSON.stringify(e).replace(/'/g,"&apos;")})'>Edit</span></td>
     </tr>`);
   });
   (m._icaiEducation||[]).forEach(e=>{
@@ -3794,43 +4092,53 @@ function renderEduRows(memberId, m){
       <td>${e.specialisation||e.qualification||'—'}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${e.graduation_year||'—'}</td>
       <td><span style="font-size:12px;color:var(--text2)">${e.education_status||'—'}</span></td>
+      <td></td>
     </tr>`);
   });
-  if(!rows.length) return `<tr><td colspan="5" style="color:var(--text3);font-size:12px;font-style:italic;text-align:center;padding:14px">No education records on file.</td></tr>`;
+  if(!rows.length) return `<tr><td colspan="6" style="color:var(--text3);font-size:12px;font-style:italic;text-align:center;padding:14px">No education records on file.</td></tr>`;
   return rows.join('');
 }
-async function addEducationEntry(memberId){
+function eduSearchFn(){
+  return async (q)=>{
+    if(!q || q.length<2) return [];
+    const courseTypeEl = document.getElementById('fm-edu_course_type');
+    if(courseTypeEl && courseTypeEl.value==='Articleship'){
+      const { orgs } = await OrgsAPI.list(q);
+      return orgs.map(o=>({ id:o.org_id, label:o.org_name, sublabel:[o.org_reg_no,o.org_type].filter(Boolean).join(' · ') }));
+    }
+    const { institutes } = await InstitutesAPI.list(q);
+    return institutes.map(i=>({ id:i.institute_id, label:i.institute_name, sublabel:i.institute_type }));
+  };
+}
+// existing: pre-fills + edits a row already on file (called from the ✎ icon
+// near Status); omit to add a brand-new education entry.
+async function addEducationEntry(memberId, existing){
+  const e = existing || {};
+  const isArticleshipExisting = e.edu_course_type === 'Articleship';
   // Articleship entries point at a firm (org search); everything else points
   // at an institution (institute search) — same shared search-select field,
   // switching its target live based on the course-type dropdown's current value.
   showFormModal({
-    title: 'Add education / institution entry',
+    title: existing ? 'Edit education / institution entry' : 'Add education / institution entry',
     submitLabel: 'Save',
     fields: [
-      { key:'edu_course_type', label:'Course type', type:'select', options:['CA Course','Articleship','University','Coaching','Other'], value:'University', onChangeClear:'institute_org_id' },
+      { key:'edu_course_type', label:'Course type', type:'select', options:['CA Course','Articleship','University','Coaching','Other'], value: e.edu_course_type || 'University', onChangeClear:'institute_org_id' },
       { key:'institute_org_id', label:'Institution / Articleship firm', type:'searchselect', required:true, full:true,
         placeholder:'Search by name, firm reg no…',
-        searchFn: async (q)=>{
-          if(!q || q.length<2) return [];
-          const courseTypeEl = document.getElementById('fm-edu_course_type');
-          if(courseTypeEl && courseTypeEl.value==='Articleship'){
-            const { orgs } = await OrgsAPI.list(q);
-            return orgs.map(o=>({ id:o.org_id, label:o.org_name, sublabel:[o.org_reg_no,o.org_type].filter(Boolean).join(' · ') }));
-          }
-          const { institutes } = await InstitutesAPI.list(q);
-          return institutes.map(i=>({ id:i.institute_id, label:i.institute_name, sublabel:i.institute_type }));
-        }
+        value: existing ? (isArticleshipExisting ? e.org_id : e.institute_id) || '' : '',
+        displayValue: existing ? (e.institute_name || e.articleship_firm || '') : '',
+        searchFn: eduSearchFn(),
       },
-      { key:'qualification_name', label:'Qualification / Degree', placeholder:'e.g. B.Com, M.Com' },
-      { key:'from_year',          label:'From year', type:'number', placeholder:'e.g. 2015' },
-      { key:'to_year',            label:'To year', type:'number', placeholder:'e.g. 2018' },
-      { key:'edu_status',         label:'Status', type:'select', options:['Completed','Active','Unknown'], value:'Completed' },
+      { key:'qualification_name', label:'Qualification / Degree', placeholder:'e.g. B.Com, M.Com', value: e.qualification_name || '' },
+      { key:'from_year',          label:'From year', type:'number', placeholder:'e.g. 2015', value: e.from_year || '' },
+      { key:'to_year',            label:'To year', type:'number', placeholder:'e.g. 2018', value: e.to_year || '' },
+      { key:'edu_status',         label:'Status', type:'select', options:['Completed','Active','Unknown'], value: e.edu_status || 'Completed' },
     ],
     onSubmit: async (vals)=>{
       if(!vals.institute_org_id){ showToast('Pick a valid institution or firm','error'); return; }
       const isArticleship = vals.edu_course_type === 'Articleship';
       try{
-        await VotersAPI.addEducation(memberId, {
+        const payload = {
           edu_course_type:    vals.edu_course_type,
           institute_id:       isArticleship ? null : vals.institute_org_id,
           org_id:              isArticleship ? vals.institute_org_id : null,
@@ -3838,12 +4146,14 @@ async function addEducationEntry(memberId){
           from_year:          vals.from_year || null,
           to_year:            vals.to_year || null,
           edu_status:         vals.edu_status,
-        });
-        showToast('Education entry added');
+        };
+        if(existing && existing.edu_hist_id) await VotersAPI.editEducation(memberId, existing.edu_hist_id, payload);
+        else await VotersAPI.addEducation(memberId, payload);
+        showToast(existing ? 'Education entry updated' : 'Education entry added');
         delete memberProfileCache[memberId];
         renderMemberProfile(memberId);
       }catch(err){
-        showToast('Failed to add education entry: '+err.message,'error');
+        showToast('Failed to save education entry: '+err.message,'error');
       }
     }
   });
@@ -4304,8 +4614,10 @@ async function loadAndRenderVoters() {
 
     renderVoters();
     loadVoterFacets();
+    const titleEl = document.getElementById('voters-title');
+    if(titleEl) titleEl.textContent = voterForcedTag==='call_list' ? 'Call list' : voterForcedTag==='meet_list' ? 'Meet list' : 'All members';
     const sub = document.getElementById('voters-sub');
-    if(sub) sub.textContent = `${total.toLocaleString()} members in the voter roll.`;
+    if(sub) sub.textContent = `${total.toLocaleString()} members ${voterForcedTag ? 'in this list' : 'in the voter roll'}.`;
   } catch(err) {
     showToast('Failed to load voters: ' + err.message, 'error');
     const tbody = document.getElementById('voters-tbody');
@@ -4313,6 +4625,38 @@ async function loadAndRenderVoters() {
   } finally {
     hideLoader();
   }
+}
+
+// Labels overview — distinct label texts with member counts (no other filter
+// applied, so it always shows everyone who has any label). Clicking one jumps
+// into All Members pre-filtered to just that label.
+async function loadAndRenderLabels(){
+  const tbody = document.getElementById('labels-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  try{
+    const data = await VotersAPI.facets({});
+    const labels = data.label || [];
+    if(!labels.length){
+      tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:16px">No labels applied yet. Use "Label" on All Members to tag members.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = labels.map(l=>{
+      const safe = String(l.val).replace(/'/g,"\\'");
+      return `<tr>
+        <td><span style="cursor:pointer;color:var(--accent);font-weight:500" onclick="openLabelInAllMembers('${safe}')">🏷️ ${String(l.val).replace(/</g,'&lt;')}</span></td>
+        <td>${parseInt(l.cnt)||0}</td>
+      </tr>`;
+    }).join('');
+  }catch(err){
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+  }
+}
+function openLabelInAllMembers(labelText){
+  voterFacets.label.clear();
+  voterFacets.label.add(labelText);
+  voterPage = 1;
+  showPage('allvoters');
 }
 
 // My Universe: always loads ALL universe members directly (universe is a
@@ -4344,6 +4688,12 @@ async function loadAndRenderPrefs() {
     await hydrateUniverseIds();
     const { voters } = await VotersAPI.list({ universe: 'in', limit: 2000, sort: 'default' });
     voters.forEach(upsertMember);
+    // "Assigned Preference" defaults to showing only members who already have
+    // a tier set; "Preference" (the assignment workflow) defaults to everyone,
+    // including Unassigned.
+    setPrefFilters(prefAssignedOnlyMode ? ['p1','p2','p3','p4'] : []);
+    const titleEl = document.querySelector('#page-preferences .page-title');
+    if(titleEl) titleEl.textContent = prefAssignedOnlyMode ? 'Assigned preferences' : 'Assign preferences';
     renderPrefs();
   } catch(err) {
     showToast('Failed to load your universe: ' + err.message, 'error');
