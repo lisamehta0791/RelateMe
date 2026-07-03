@@ -14,15 +14,17 @@ router.get('/', async (req, res) => {
   const { search = '' } = req.query;
   const lim = Math.min(parseInt(req.query.limit) || 20, 50);
   try {
-    let sql = `SELECT institute_id, institute_name, institute_type, affiliation_type,
-                      governing_body, established_year, institute_status, created_at
-               FROM tbl_institute_details`;
+    let sql = `SELECT i.institute_id, i.institute_name, i.institute_type, i.affiliation_type,
+                      i.governing_body, i.established_year, i.institute_status, i.created_at,
+                      COUNT(DISTINCT eh.icai_membership_no) AS member_count
+               FROM tbl_institute_details i
+               LEFT JOIN tbl_voter_education_history eh ON eh.institute_id = i.institute_id`;
     const params = [];
     if (search) {
-      sql += ' WHERE institute_name ILIKE ?';
+      sql += ' WHERE i.institute_name ILIKE ?';
       params.push(`%${search}%`);
     }
-    sql += ` ORDER BY institute_name ASC LIMIT ${lim}`;
+    sql += ` GROUP BY i.institute_id ORDER BY i.institute_name ASC LIMIT ${lim}`;
     const [rows] = await pool.execute(sql, params);
     res.json({ institutes: rows });
   } catch (err) {

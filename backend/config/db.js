@@ -22,6 +22,10 @@ types.setTypeParser(20, val => parseInt(val, 10));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  // Default (10) was a bottleneck once routes started firing several queries
+  // concurrently via Promise.all (the member profile route alone fires 11 at
+  // once) — bumped so a single request's fan-out doesn't queue against itself.
+  max: 20,
 });
 
 pool.on('error', err => console.error('Unexpected Postgres pool error:', err));

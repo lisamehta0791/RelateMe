@@ -91,6 +91,9 @@ const DashboardAPI = {
   // sort: 'total'|'in_universe'|'not_in_universe'|'p1'|'p2'|'p3'|'p4'|'un' (default 'total')
   // dir: 'asc'|'desc' (default 'desc')
   async city(params = {})      { return apiFetch('/api/dashboard/city' + toQS(params)); },
+  // All real cities from the booth address master, incl. ones with 0 members
+  // yet — used by the onboarding city picker (params: { search }).
+  async cityOptions(params = {}) { return apiFetch('/api/dashboard/city-options' + toQS(params)); },
   async firm(params = {})      { return apiFetch('/api/dashboard/firm' + toQS(params)); },
   async institute(params = {}) { return apiFetch('/api/dashboard/institute' + toQS(params)); },
 };
@@ -277,6 +280,20 @@ const GoalsAPI = {
 const OnboardingAPI = {
   async getProfile()  { return apiFetch('/api/onboarding/profile'); },
   async saveProfile(payload) { return apiFetch('/api/onboarding/profile', { method: 'PUT', body: payload }); },
+  // Re-runs the "seed My Universe from my answers" shortlist rule — also runs
+  // automatically once when the onboarding wizard is first completed.
+  async applyShortlist() { return apiFetch('/api/onboarding/apply-shortlist', { method: 'POST' }); },
+  // phones: array of raw phone strings parsed client-side from a CSV/vCard upload.
+  async importContacts(phones) { return apiFetch('/api/onboarding/import-contacts', { method: 'POST', body: { phones } }); },
+};
+
+// ── Contestant tagging API (competitor / ex_colleague / ally) ─────────────────
+const ContestantsAPI = {
+  async list() { return apiFetch('/api/onboarding/contestants'); },
+  async tag(icai_membership_no, tag_type) {
+    return apiFetch('/api/onboarding/contestants', { method: 'POST', body: { icai_membership_no, tag_type } });
+  },
+  async remove(contestantId) { return apiFetch('/api/onboarding/contestants/' + contestantId, { method: 'DELETE' }); },
 };
 
 // ── Global loading state ──────────────────────────────────────────────────────

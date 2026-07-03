@@ -61,8 +61,8 @@ function parseSummarySort(req, defaultCol = 'total') {
 
 // ── GET /api/dashboard/city ──────────────────────────────────────────────────
 // Preference breakdown grouped by city. City comes from the booth chain
-// (tbl_voter_voting_history.voter_booth_no -> tbl_booth_master -> tbl_booth_address_master),
-// not from the member directly — members with no voting-history row have no city yet.
+// (tbl_voter.boothno_new -> tbl_booth_master -> tbl_booth_address_master),
+// not from the member directly — members with no voter-roll row have no city yet.
 // Paginated — page/limit query params (default 50/page).
 router.get('/city', async (req, res) => {
   try {
@@ -73,9 +73,9 @@ router.get('/city', async (req, res) => {
     const params = [uid];
     let JOINS = `
       FROM tbl_ca_member m
-      LEFT JOIN tbl_voter_voting_history v ON v.icai_membership_no = m.icai_membership_no
-                            AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter_voting_history)
-      LEFT JOIN tbl_booth_master bm          ON bm.election_year = v.election_year AND bm.boothno = v.voter_booth_no
+      LEFT JOIN tbl_voter v ON v.icai_membership_no = m.icai_membership_no
+                            AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter)
+      LEFT JOIN tbl_booth_master bm          ON bm.election_year = v.election_year AND bm.boothno = v.boothno_new
       LEFT JOIN tbl_booth_address_master bam ON bam.booth_address_id = bm.booth_address_id
       LEFT JOIN tbl_user_universe uu ON uu.icai_membership_no = m.icai_membership_no AND uu.user_id = ?
       LEFT JOIN tbl_voter_preference vp ON vp.icai_membership_no = m.icai_membership_no
@@ -105,6 +105,36 @@ router.get('/city', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'City summary fetch failed' });
+  }
+});
+
+// ── GET /api/dashboard/city-options ──────────────────────────────────────────
+// City picker for the onboarding wizard. Unlike /city (anchored on
+// tbl_ca_member, so a city only shows up once it has an actual member/voter
+// row), this is anchored on tbl_booth_address_master so every real city shows
+// up as a pickable option even if no voter data has been loaded for it yet.
+// Not paginated — the master list is only ~100 cities.
+router.get('/city-options', async (req, res) => {
+  try {
+    const { search = '' } = req.query;
+    const params = [];
+    let WHERE = `WHERE bam.booth_city IS NOT NULL AND bam.booth_city != ''`;
+    if (search) { WHERE += ' AND bam.booth_city ILIKE ?'; params.push(`%${search}%`); }
+    const [rows] = await pool.execute(`
+      SELECT bam.booth_city AS city, COUNT(DISTINCT m.icai_membership_no) AS total
+      FROM tbl_booth_address_master bam
+      LEFT JOIN tbl_booth_master bm ON bm.booth_address_id = bam.booth_address_id
+      LEFT JOIN tbl_voter v         ON v.election_year = bm.election_year AND v.boothno_new = bm.boothno
+      LEFT JOIN tbl_ca_member m     ON m.icai_membership_no = v.icai_membership_no
+      ${WHERE}
+      GROUP BY bam.booth_city
+      ORDER BY bam.booth_city ASC
+      LIMIT 300
+    `, params);
+    res.json({ cities: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch city options' });
   }
 });
 

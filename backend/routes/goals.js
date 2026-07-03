@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
   try {
     // Resolve election year from voter data; default to current calendar year.
     const [[yr]] = await pool.execute(
-      'SELECT MAX(election_year) AS y FROM tbl_voter_voting_history'
+      'SELECT MAX(election_year) AS y FROM tbl_voter'
     );
     const electionYear = yr && yr.y ? yr.y : new Date().getFullYear();
 
@@ -59,7 +59,7 @@ router.post('/', async (req, res) => {
 
   try {
     const [[yr]] = await pool.execute(
-      'SELECT MAX(election_year) AS y FROM tbl_voter_voting_history'
+      'SELECT MAX(election_year) AS y FROM tbl_voter'
     );
     const electionYear = yr && yr.y ? yr.y : new Date().getFullYear();
 

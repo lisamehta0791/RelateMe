@@ -227,9 +227,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 
 /* ── SEARCH/FILTER BAR ── */
 .filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.search-input{padding:7px 12px 7px 32px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;min-width:220px}
+.search-input{padding:7px 28px 7px 32px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;min-width:220px}
 .search-wrap{position:relative;display:inline-block}
 .search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.search-clear-x{position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:15px;line-height:1;padding:2px;display:none;user-select:none}
+.search-clear-x:hover{color:var(--text)}
+input:not(:placeholder-shown) ~ .search-clear-x{display:block}
 .sort-arrow{cursor:pointer;color:var(--text3);font-size:11px;margin-left:3px;user-select:none;display:inline-block}
 .sort-arrow:hover{color:var(--accent)}
 .sort-arrow.active{color:var(--accent);font-weight:700}
@@ -617,16 +620,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
       </div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-label">Summary</div>
-      <div class="sidebar-item" onclick="showPage('citywise')" id="nav-citywise">
+      <div class="sidebar-label">Details</div>
+      <div class="sidebar-item" onclick="showPage('citywise',{mode:'details'})" id="nav-citywise">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         City
       </div>
-      <div class="sidebar-item" onclick="showPage('firmwise')" id="nav-firmwise">
+      <div class="sidebar-item" onclick="showPage('firmwise',{mode:'details'})" id="nav-firmwise">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         Organisation
       </div>
-      <div class="sidebar-item" onclick="showPage('institutewise')" id="nav-institutewise">
+      <div class="sidebar-item" onclick="showPage('institutewise',{mode:'details'})" id="nav-institutewise">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1 2 3 6 3s6-2 6-3v-5"/></svg>
         Institute
       </div>
@@ -736,11 +739,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 
         <div class="card" style="margin-bottom:16px">
           <div class="card-title">6 — Coaching institutes or CPE events you are associated with</div>
-          <div id="ob-q-coaching-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0"></div>
-          <div style="display:flex;gap:8px">
-            <input type="text" id="ob-q-coaching-input" placeholder="Type a name and press Enter" style="flex:1;padding:6px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter'){event.preventDefault();obAddCoachingTag();}">
-            <button class="btn-sm" onclick="obAddCoachingTag()">+ Add</button>
-          </div>
+          <div id="ob-q-coachingInstitutes"></div>
         </div>
 
         <div class="card" style="margin-bottom:16px">
@@ -753,13 +752,51 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
           <input type="text" id="ob-q-college" class="goal-input" style="font-size:14px;width:100%" placeholder="e.g. Loyola College, Chennai">
         </div>
 
-        <div class="card" style="margin-bottom:24px">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">9 — Import phone contacts</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Upload a CSV or vCard (.vcf) export of your phone contacts — matched against the member database to seed your universe. (A plain web app can't read your phone's contacts directly — export a file from your Contacts app and upload it here.)</div>
+          <input type="file" id="ob-q-contactsFile" accept=".csv,.vcf,text/csv,text/vcard" onchange="obImportContactsFile(this)">
+          <div id="ob-q-contactsResult" style="font-size:12px;color:var(--text3);margin-top:8px"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">10 — Senior FCAs or branch / regional chairs who support you</div>
+          <div id="ob-q-seniorFcaSupporters"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">11 — CA firms (not just individuals) backing you as a firm</div>
+          <div id="ob-q-backingFirms"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">12 — Influencers you want to reach but don't have a relationship with yet</div>
+          <div id="ob-q-influencers"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">13-15 — Contestants: competition, ex-colleagues &amp; allies</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Search a member and tag them as direct competition (shared voter overlap), an ex-colleague/batchmate/firm-mate, or an ally. The % shown is a rough overlap estimate based on shared city/firm — not a real probability.</div>
+          <input type="text" placeholder="Search member by name or membership no…" oninput="obContestantSearchInput(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box">
+          <div id="ob-q-contestants-results" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search members…</div></div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Tagged</div>
+          <div id="ob-q-contestants-list"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
           <div class="card-title">16 — Earliest date you want to begin active outreach</div>
           <input type="date" id="ob-q-outreachDate" class="goal-input" style="font-size:14px;width:200px;font-family:inherit">
         </div>
 
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-title">17 — Social-media networking</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Flags your intent to use these channels for outreach (no account linking — there's no LinkedIn/email integration in this app yet).</div>
+          <div id="ob-q-socialConnects"></div>
+        </div>
+
         <div style="display:flex;justify-content:flex-end;gap:12px;align-items:center;padding-bottom:24px">
           <span id="ob-save-status" style="font-size:12px;color:var(--text3)"></span>
+          <button class="btn-sm" onclick="obApplyShortlist()" title="Re-scan your answers and add any newly-matching members to My Universe">↻ Add matches to My Universe</button>
           <button class="btn-primary" onclick="obSaveQuestionnaire()" style="width:auto;padding:10px 24px">Save answers</button>
         </div>
       </div>
@@ -867,6 +904,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="search-input" type="text" placeholder="Search name, city or organisation…" oninput="onUnivSearchInput()" id="univ-search">
+            <span class="search-clear-x" onclick="clearSearchBox('univ-search','onUnivSearchInput')">✕</span>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -915,6 +953,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="search-input" type="text" placeholder="Name, membership no, organisation or city…" oninput="onVoterSearchInput()" id="voters-search">
+            <span class="search-clear-x" onclick="clearSearchBox('voters-search','onVoterSearchInput')">✕</span>
           </div>
           <button class="btn-sm" id="voter-universe-toggle-btn" onclick="toggleVoterUniverseFilter()">★ My Universe</button>
           <span id="voter-count" style="font-size:12px;color:var(--text3);margin-left:auto">12 shown</span>
@@ -975,6 +1014,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" class="search-input" placeholder="Name, organisation or city…" oninput="renderPrefs()" id="prefs-search">
+            <span class="search-clear-x" onclick="clearSearchBox('prefs-search','renderPrefs')">✕</span>
           </div>
           <span style="font-size:12px;color:var(--text3)">Filter</span>
           <button class="filter-pref-btn fp1" id="pf-p1" onclick="togglePrefFilter(this,'p1')">P1</button>
@@ -997,25 +1037,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     <div class="page" id="page-citywise">
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
-          <div><div class="page-title">City</div><div class="page-sub">Member spread and preference split across your campaign cities.</div></div>
+          <div><div class="page-title" id="city-page-title">City</div><div class="page-sub" id="city-page-sub">Member spread and preference split across your campaign cities.</div></div>
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" class="search-input" placeholder="Search city…" oninput="onCitySearchInput()" id="city-search">
+            <span class="search-clear-x" onclick="clearSearchBox('city-search','onCitySearchInput')">✕</span>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="city-table">
-            <thead><tr>
-              <th>City</th>
-              <th>Members <span class="sort-arrow" id="city-sort-total" onclick="citySortBy('total')" title="Sort by members">↕</span></th>
-              <th>In Universe <span class="sort-arrow" id="city-sort-in_universe" onclick="citySortBy('in_universe')" title="Sort by in universe">↕</span></th>
-              <th>Not in Universe <span class="sort-arrow" id="city-sort-not_in_universe" onclick="citySortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
-              <th>P1 <span class="sort-arrow" id="city-sort-p1" onclick="citySortBy('p1')" title="Sort by P1">↕</span></th>
-              <th>P2 <span class="sort-arrow" id="city-sort-p2" onclick="citySortBy('p2')" title="Sort by P2">↕</span></th>
-              <th>P3 <span class="sort-arrow" id="city-sort-p3" onclick="citySortBy('p3')" title="Sort by P3">↕</span></th>
-              <th>&gt;P3 <span class="sort-arrow" id="city-sort-p4" onclick="citySortBy('p4')" title="Sort by >P3">↕</span></th>
-              <th>Unassigned <span class="sort-arrow" id="city-sort-un" onclick="citySortBy('un')" title="Sort by unassigned">↕</span></th>
-            </tr></thead>
+            <thead><tr id="city-thead-row"></tr></thead>
             <tbody id="city-tbody"></tbody>
           </table>
         </div>
@@ -1027,11 +1058,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     <div class="page" id="page-firmwise">
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
-          <div><div class="page-title">Organisation details</div><div class="page-sub">Preference split grouped by organisation.</div></div>
+          <div><div class="page-title" id="firm-page-title">Organisation details</div><div class="page-sub" id="firm-page-sub">Preference split grouped by organisation.</div></div>
           <div style="display:flex;gap:8px;align-items:center">
             <div class="search-wrap">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" class="search-input" placeholder="Search organisation…" oninput="onFirmSearchInput()" id="firm-search">
+              <span class="search-clear-x" onclick="clearSearchBox('firm-search','onFirmSearchInput')">✕</span>
             </div>
             <select onchange="onFirmTypeFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
               <option value="">All types</option>
@@ -1048,18 +1080,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="firm-table">
-            <thead><tr>
-              <th>Organisation</th>
-              <th>Type</th>
-              <th>Members <span class="sort-arrow" id="firm-sort-total" onclick="firmSortBy('total')" title="Sort by members">↕</span></th>
-              <th>In Universe <span class="sort-arrow" id="firm-sort-in_universe" onclick="firmSortBy('in_universe')" title="Sort by in universe">↕</span></th>
-              <th>Not in Universe <span class="sort-arrow" id="firm-sort-not_in_universe" onclick="firmSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
-              <th>P1 <span class="sort-arrow" id="firm-sort-p1" onclick="firmSortBy('p1')" title="Sort by P1">↕</span></th>
-              <th>P2 <span class="sort-arrow" id="firm-sort-p2" onclick="firmSortBy('p2')" title="Sort by P2">↕</span></th>
-              <th>P3 <span class="sort-arrow" id="firm-sort-p3" onclick="firmSortBy('p3')" title="Sort by P3">↕</span></th>
-              <th>&gt;P3 <span class="sort-arrow" id="firm-sort-p4" onclick="firmSortBy('p4')" title="Sort by >P3">↕</span></th>
-              <th>Unassigned <span class="sort-arrow" id="firm-sort-un" onclick="firmSortBy('un')" title="Sort by unassigned">↕</span></th>
-            </tr></thead>
+            <thead><tr id="firm-thead-row"></tr></thead>
             <tbody id="firm-tbody"></tbody>
           </table>
         </div>
@@ -1081,11 +1102,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     <div class="page" id="page-institutewise">
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
-          <div><div class="page-title">Institute detais</div><div class="page-sub">Preference split grouped by educational institution (universities &amp; coaching).</div></div>
+          <div><div class="page-title" id="institute-page-title">Institute detais</div><div class="page-sub" id="institute-page-sub">Preference split grouped by educational institution (universities &amp; coaching).</div></div>
           <div style="display:flex;gap:8px;align-items:center">
             <div class="search-wrap">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" class="search-input" placeholder="Search institute…" oninput="onInstituteSearchInput()" id="institute-search">
+              <span class="search-clear-x" onclick="clearSearchBox('institute-search','onInstituteSearchInput')">✕</span>
             </div>
             <select onchange="onInstituteTypeFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
               <option value="">All types</option>
@@ -1104,19 +1126,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="sum-tbl" id="institute-table">
-            <thead><tr>
-              <th>Institute</th>
-              <th>Type</th>
-              <th>Members <span class="sort-arrow" id="institute-sort-total" onclick="instituteSortBy('total')" title="Sort by members">↕</span></th>
-              <th>In Universe <span class="sort-arrow" id="institute-sort-in_universe" onclick="instituteSortBy('in_universe')" title="Sort by in universe">↕</span></th>
-              <th>Not in Universe <span class="sort-arrow" id="institute-sort-not_in_universe" onclick="instituteSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>
-              <th>P1 <span class="sort-arrow" id="institute-sort-p1" onclick="instituteSortBy('p1')" title="Sort by P1">↕</span></th>
-              <th>P2 <span class="sort-arrow" id="institute-sort-p2" onclick="instituteSortBy('p2')" title="Sort by P2">↕</span></th>
-              <th>P3 <span class="sort-arrow" id="institute-sort-p3" onclick="instituteSortBy('p3')" title="Sort by P3">↕</span></th>
-              <th>&gt;P3 <span class="sort-arrow" id="institute-sort-p4" onclick="instituteSortBy('p4')" title="Sort by >P3">↕</span></th>
-              <th>Unassigned <span class="sort-arrow" id="institute-sort-un" onclick="instituteSortBy('un')" title="Sort by unassigned">↕</span></th>
-              <th>Status</th>
-            </tr></thead>
+            <thead><tr id="institute-thead-row"></tr></thead>
             <tbody id="institute-tbody"></tbody>
           </table>
         </div>
@@ -1419,9 +1429,12 @@ function showFormModal(cfg){
       return `<div class="ff${f.full?' ff-full':''}" id="ff-wrap-${f.key}" style="position:relative">
         <label>${f.label}${f.required?' <span class="req">*</span>':''}</label>
         <input type="hidden" id="${id}" value="${f.value!=null?f.value:''}">
-        <input type="text" id="${id}-display" autocomplete="off" placeholder="${f.placeholder||'Search by name or reg no…'}" value="${String(displayVal).replace(/"/g,'&quot;')}"
-          oninput="fmSearchSelectInput('${f.key}',this.value)" onfocus="fmSearchSelectInput('${f.key}',this.value)"
-          style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+        <div style="position:relative">
+          <input type="text" id="${id}-display" autocomplete="off" placeholder="${f.placeholder||'Search by name or reg no…'}" value="${String(displayVal).replace(/"/g,'&quot;')}"
+            oninput="fmSearchSelectInput('${f.key}',this.value)" onfocus="fmSearchSelectInput('${f.key}',this.value)"
+            style="width:100%;padding:8px 26px 8px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+          <span class="search-clear-x" onclick="const i=this.previousElementSibling; i.value=''; fmSearchSelectInput('${f.key}',''); i.focus();">✕</span>
+        </div>
         <div id="${id}-results" class="fm-searchselect-results" style="position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none"></div>
       </div>`;
     }
@@ -1699,9 +1712,13 @@ function showPage(id, opts){
   if(id==='labels'){ loadAndRenderLabels(); }
   if(id==='preferences'){ prefAssignedOnlyMode = false; loadAndRenderPrefs(); }
   if(id==='assignedpreferences'){ prefAssignedOnlyMode = true; loadAndRenderPrefs(); }
-  if(id==='citywise') renderCityTable();
-  if(id==='firmwise') renderFirmTable();
-  if(id==='institutewise') renderInstituteTable();
+  // Sidebar "Details" section enters these same tables in a stripped-down
+  // mode (no preference-tier breakdown) — the Preference/Assigned Preference
+  // page's "City-wise"/"Organization-wise"/"Institution-wise" buttons are the
+  // only way to reach the full summary-with-preference-breakdown view.
+  if(id==='citywise'){ citySummaryMode = (opts&&opts.mode)||'summary'; renderCityTableHead(); renderCityTable(); }
+  if(id==='firmwise'){ firmSummaryMode = (opts&&opts.mode)||'summary'; renderFirmTableHead(); renderFirmTable(); }
+  if(id==='institutewise'){ instituteSummaryMode = (opts&&opts.mode)||'summary'; renderInstituteTableHead(); renderInstituteTable(); }
   if(id==='citydetail' && opts) renderCityDetail(opts.city);
   if(id==='firmdetail' && opts) renderFirmDetail(opts.firm);
   if(id==='institutedetail' && opts) renderInstituteDetail(opts.institute);
@@ -1821,6 +1838,10 @@ async function loadOnboardingQuestionnaire(){
       ca_final_year: (p && p.ca_final_year) || '',
       graduation_college: (p && p.graduation_college) || '',
       outreach_start_date: (p && p.outreach_start_date) ? String(p.outreach_start_date).slice(0,10) : '',
+      senior_fca_supporter_ids: (p && p.senior_fca_supporter_ids) || [],
+      backing_firm_org_ids: (p && p.backing_firm_org_ids) || [],
+      influencer_member_ids: (p && p.influencer_member_ids) || [],
+      social_connects: (p && p.social_connects) || {},
     };
     document.getElementById('ob-q-branch').value = obProfile.icai_branch;
     document.getElementById('ob-q-caFinalYear').value = obProfile.ca_final_year;
@@ -1828,10 +1849,15 @@ async function loadOnboardingQuestionnaire(){
     document.getElementById('ob-q-outreachDate').value = obProfile.outreach_start_date;
     document.getElementById('ob-q-artStudentCount').value = obProfile.articleship_student_count;
     obRenderArticleshipButtons();
-    obRenderCoachingTags();
     obRenderCityPicker('ob-q-seekingCities', 'seeking_vote_cities');
     obRenderCityPicker('ob-q-practiceCities', 'practice_cities');
-    obRenderFirmPicker();
+    obRenderFirmPicker('ob-q-pastFirms', 'past_firm_org_ids');
+    obRenderFirmPicker('ob-q-backingFirms', 'backing_firm_org_ids');
+    obRenderInstitutePicker();
+    obRenderMemberPicker('ob-q-seniorFcaSupporters', 'senior_fca_supporter_ids');
+    obRenderMemberPicker('ob-q-influencers', 'influencer_member_ids');
+    obRenderSocialConnects();
+    obLoadContestants();
     const statusEl = document.getElementById('ob-save-status'); if(statusEl) statusEl.textContent = '';
   }catch(err){
     showToast('Failed to load questionnaire: '+err.message, 'error');
@@ -1852,26 +1878,68 @@ function obSetArticleshipPrincipal(val){
   obRenderArticleshipButtons();
 }
 
-function obRenderCoachingTags(){
-  const el = document.getElementById('ob-q-coaching-chips');
+// ── Coaching institutes picker — same live-search-by-count pattern as the
+// firm picker (obRenderFirmPicker), instead of free-text chips, so answers
+// here can actually be joined against tbl_institute_details for the
+// shortlist rule / member counts instead of being unmatched strings. ──
+const obInstituteLabelCache = {}; // institute_id -> {name, total}
+function obInstituteSearchInput(q){
+  clearTimeout(_obSearchDebounce['ob-q-coachingInstitutes']);
+  _obSearchDebounce['ob-q-coachingInstitutes'] = setTimeout(async ()=>{
+    const resultsEl = document.getElementById('ob-q-coachingInstitutes-results');
+    if(!resultsEl) return;
+    if(!q || !q.trim()){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">Type to search institutes…</div>`; return; }
+    resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">Searching…</div>`;
+    try{
+      const { institutes } = await InstitutesAPI.list(q);
+      (institutes||[]).forEach(i=>{ obInstituteLabelCache[i.institute_id] = { name:i.institute_name, total:i.member_count }; });
+      obRenderInstituteResults(institutes||[]);
+    }catch(e){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger)">Search failed: ${e.message}</div>`; }
+  }, 300);
+}
+function obRenderInstituteResults(institutes){
+  const resultsEl = document.getElementById('ob-q-coachingInstitutes-results');
+  if(!resultsEl) return;
+  const selected = new Set((obProfile.coaching_institutes||[]).map(String));
+  if(!institutes.length){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">No matching institutes.</div>`; return; }
+  resultsEl.innerHTML = institutes.map(i=>{
+    const checked = selected.has(String(i.institute_id)) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer">
+      <input type="checkbox" ${checked} onchange="obToggleInstituteValue('${i.institute_id}',this.checked)">
+      <span style="flex:1">${String(i.institute_name||'').replace(/</g,'&lt;')}</span>
+      <span style="color:var(--text3);font-size:12px">${parseInt(i.member_count)||0} CAs</span>
+    </label>`;
+  }).join('');
+}
+function obToggleInstituteValue(instituteId, checked){
+  obToggleListValue('coaching_institutes', instituteId, checked);
+  obRenderInstituteSelected();
+}
+function obRenderInstituteSelected(){
+  const el = document.getElementById('ob-q-coachingInstitutes-selected');
   if(!el) return;
-  const tags = obProfile.coaching_institutes||[];
-  el.innerHTML = tags.length
-    ? tags.map((t,i)=>`<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px">${String(t).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="obRemoveCoachingTag(${i})">✕</span></span>`).join('')
-    : `<span style="font-size:12px;color:var(--text3)">No tags added yet.</span>`;
+  const sel = obProfile.coaching_institutes||[];
+  el.innerHTML = sel.length
+    ? sel.map(id=>{
+        const cached = obInstituteLabelCache[id];
+        const label = cached ? `${cached.name} (${parseInt(cached.total)||0} CAs)` : `Institute #${id}`;
+        return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px;margin:2px">${String(label).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="obToggleInstituteValue('${id}',false)">✕</span></span>`;
+      }).join('')
+    : `<span style="font-size:12px;color:var(--text3)">None selected yet.</span>`;
 }
-function obAddCoachingTag(){
-  const input = document.getElementById('ob-q-coaching-input');
-  const val = input.value.trim();
-  if(!val) return;
-  obProfile.coaching_institutes = obProfile.coaching_institutes || [];
-  obProfile.coaching_institutes.push(val);
-  input.value = '';
-  obRenderCoachingTags();
-}
-function obRemoveCoachingTag(i){
-  obProfile.coaching_institutes.splice(i,1);
-  obRenderCoachingTags();
+function obRenderInstitutePicker(){
+  const el = document.getElementById('ob-q-coachingInstitutes');
+  if(!el) return;
+  el.innerHTML = `
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" placeholder="Search institute or coaching centre…" oninput="obInstituteSearchInput(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="const i=this.previousElementSibling; i.value=''; obInstituteSearchInput(''); i.focus();">✕</span>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Selected</div>
+    <div id="ob-q-coachingInstitutes-selected" style="margin-bottom:10px"></div>
+    <div id="ob-q-coachingInstitutes-results" style="max-height:220px;overflow-y:auto"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search institutes…</div></div>
+  `;
+  obRenderInstituteSelected();
 }
 
 function obToggleListValue(fieldKey, value, checked){
@@ -1896,7 +1964,7 @@ function obCitySearchInput(containerId, fieldKey, q){
     if(!q || !q.trim()){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">Type to search cities…</div>`; return; }
     resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">Searching…</div>`;
     try{
-      const { cities } = await DashboardAPI.city({ search:q, limit:20 });
+      const { cities } = await DashboardAPI.cityOptions({ search:q });
       obRenderCityResults(containerId, fieldKey, cities||[]);
     }catch(e){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger)">Search failed: ${e.message}</div>`; }
   }, 300);
@@ -1935,7 +2003,10 @@ function obRenderCityPicker(containerId, fieldKey){
   const el = document.getElementById(containerId);
   if(!el) return;
   el.innerHTML = `
-    <input type="text" placeholder="Search city…" oninput="obCitySearchInput('${containerId}','${fieldKey}',this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box">
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" placeholder="Search city…" oninput="obCitySearchInput('${containerId}','${fieldKey}',this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="const i=this.previousElementSibling; i.value=''; obCitySearchInput('${containerId}','${fieldKey}',''); i.focus();">✕</span>
+    </div>
     <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Selected</div>
     <div id="${containerId}-selected" style="margin-bottom:10px"></div>
     <div id="${containerId}-results" style="max-height:220px;overflow-y:auto"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search cities…</div></div>
@@ -1943,63 +2014,245 @@ function obRenderCityPicker(containerId, fieldKey){
   obRenderCitySelected(containerId, fieldKey);
 }
 
-function obFirmSearchInput(q){
-  clearTimeout(_obSearchDebounce['ob-q-pastFirms']);
-  _obSearchDebounce['ob-q-pastFirms'] = setTimeout(async ()=>{
-    const resultsEl = document.getElementById('ob-q-pastFirms-results');
+// Generalized over (containerId, fieldKey) — same picker powers both Q4
+// (past_firm_org_ids) and the Step 2 "firms backing you" question
+// (backing_firm_org_ids), same pattern as the city picker above.
+function obFirmSearchInput(containerId, fieldKey, q){
+  clearTimeout(_obSearchDebounce[containerId]);
+  _obSearchDebounce[containerId] = setTimeout(async ()=>{
+    const resultsEl = document.getElementById(containerId+'-results');
     if(!resultsEl) return;
     if(!q || !q.trim()){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">Type to search firms by name or registration no…</div>`; return; }
     resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">Searching…</div>`;
     try{
       const { firms } = await DashboardAPI.firm({ search:q, limit:20 });
       (firms||[]).forEach(f=>{ obFirmLabelCache[f.org_id] = { firm:f.firm, total:f.total }; });
-      obRenderFirmResults(firms||[]);
+      obRenderFirmResults(containerId, fieldKey, firms||[]);
     }catch(e){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger)">Search failed: ${e.message}</div>`; }
   }, 300);
 }
-function obRenderFirmResults(firms){
-  const resultsEl = document.getElementById('ob-q-pastFirms-results');
+function obRenderFirmResults(containerId, fieldKey, firms){
+  const resultsEl = document.getElementById(containerId+'-results');
   if(!resultsEl) return;
-  const selected = new Set((obProfile.past_firm_org_ids||[]).map(String));
+  const selected = new Set((obProfile[fieldKey]||[]).map(String));
   if(!firms.length){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">No matching firms.</div>`; return; }
   resultsEl.innerHTML = firms.map(f=>{
     const checked = selected.has(String(f.org_id)) ? 'checked' : '';
     return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer">
-      <input type="checkbox" ${checked} onchange="obToggleFirmValue('${f.org_id}',this.checked)">
+      <input type="checkbox" ${checked} onchange="obToggleFirmValue('${containerId}','${fieldKey}','${f.org_id}',this.checked)">
       <span style="flex:1">${String(f.firm||'').replace(/</g,'&lt;')}</span>
       <span style="color:var(--text3);font-size:12px">${parseInt(f.total)||0} CAs currently</span>
     </label>`;
   }).join('');
 }
-function obToggleFirmValue(orgId, checked){
-  obToggleListValue('past_firm_org_ids', orgId, checked);
-  obRenderFirmSelected();
+function obToggleFirmValue(containerId, fieldKey, orgId, checked){
+  obToggleListValue(fieldKey, orgId, checked);
+  obRenderFirmSelected(containerId, fieldKey);
 }
-function obRenderFirmSelected(){
-  const el = document.getElementById('ob-q-pastFirms-selected');
+function obRenderFirmSelected(containerId, fieldKey){
+  const el = document.getElementById(containerId+'-selected');
   if(!el) return;
-  const sel = obProfile.past_firm_org_ids||[];
+  const sel = obProfile[fieldKey]||[];
   el.innerHTML = sel.length
     ? sel.map(id=>{
         const cached = obFirmLabelCache[id];
         const label = cached ? `${cached.firm} (${parseInt(cached.total)||0} CAs)` : `Firm #${id}`;
-        return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px;margin:2px">${String(label).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="obToggleFirmValue('${id}',false)">✕</span></span>`;
+        return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px;margin:2px">${String(label).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="obToggleFirmValue('${containerId}','${fieldKey}','${id}',false)">✕</span></span>`;
       }).join('')
     : `<span style="font-size:12px;color:var(--text3)">None selected yet.</span>`;
 }
-function obRenderFirmPicker(){
-  const el = document.getElementById('ob-q-pastFirms');
+function obRenderFirmPicker(containerId, fieldKey){
+  const el = document.getElementById(containerId);
   if(!el) return;
   // Pre-populate the label cache from the top-firms list so already-selected
   // firms (saved in an earlier session) can show a name immediately.
   (obFirmOptions||[]).forEach(f=>{ obFirmLabelCache[f.org_id] = { firm:f.firm, total:f.total }; });
   el.innerHTML = `
-    <input type="text" placeholder="Search firm by name or registration no…" oninput="obFirmSearchInput(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box">
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" placeholder="Search firm by name or registration no…" oninput="obFirmSearchInput('${containerId}','${fieldKey}',this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="const i=this.previousElementSibling; i.value=''; obFirmSearchInput('${containerId}','${fieldKey}',''); i.focus();">✕</span>
+    </div>
     <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Selected</div>
-    <div id="ob-q-pastFirms-selected" style="margin-bottom:10px"></div>
-    <div id="ob-q-pastFirms-results" style="max-height:220px;overflow-y:auto"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search firms by name or registration no…</div></div>
+    <div id="${containerId}-selected" style="margin-bottom:10px"></div>
+    <div id="${containerId}-results" style="max-height:220px;overflow-y:auto"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search firms by name or registration no…</div></div>
   `;
-  obRenderFirmSelected();
+  obRenderFirmSelected(containerId, fieldKey);
+}
+
+// ── Member picker (senior FCA supporters, influencers) — searches the member
+// roll itself (VotersAPI.list) rather than a dashboard summary endpoint. Same
+// select/search/chip pattern as the city and firm pickers above. ──
+const obMemberLabelCache = {}; // icai_membership_no -> display name
+function obMemberSearchInput(containerId, fieldKey, q){
+  clearTimeout(_obSearchDebounce[containerId]);
+  _obSearchDebounce[containerId] = setTimeout(async ()=>{
+    const resultsEl = document.getElementById(containerId+'-results');
+    if(!resultsEl) return;
+    if(!q || !q.trim()){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">Type to search members by name or membership no…</div>`; return; }
+    resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">Searching…</div>`;
+    try{
+      const { voters } = await VotersAPI.list({ search:q, limit:20 });
+      (voters||[]).forEach(v=>{ obMemberLabelCache[v.mno] = v.name; });
+      obRenderMemberResults(containerId, fieldKey, voters||[]);
+    }catch(e){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger)">Search failed: ${e.message}</div>`; }
+  }, 300);
+}
+function obRenderMemberResults(containerId, fieldKey, members){
+  const resultsEl = document.getElementById(containerId+'-results');
+  if(!resultsEl) return;
+  const selected = new Set((obProfile[fieldKey]||[]).map(String));
+  if(!members.length){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">No matching members.</div>`; return; }
+  resultsEl.innerHTML = members.map(v=>{
+    const checked = selected.has(String(v.mno)) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer">
+      <input type="checkbox" ${checked} onchange="obToggleMemberValue('${containerId}','${fieldKey}','${v.mno}',this.checked)">
+      <span style="flex:1">${String(v.name||'').replace(/</g,'&lt;')}</span>
+      <span style="color:var(--text3);font-size:12px">${v.mno}</span>
+    </label>`;
+  }).join('');
+}
+function obToggleMemberValue(containerId, fieldKey, mno, checked){
+  obToggleListValue(fieldKey, mno, checked);
+  obRenderMemberSelected(containerId, fieldKey);
+}
+function obRenderMemberSelected(containerId, fieldKey){
+  const el = document.getElementById(containerId+'-selected');
+  if(!el) return;
+  const sel = obProfile[fieldKey]||[];
+  el.innerHTML = sel.length
+    ? sel.map(mno=>{
+        const label = obMemberLabelCache[mno] || `Member #${mno}`;
+        return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px;margin:2px">${String(label).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="obToggleMemberValue('${containerId}','${fieldKey}','${mno}',false)">✕</span></span>`;
+      }).join('')
+    : `<span style="font-size:12px;color:var(--text3)">None selected yet.</span>`;
+}
+function obRenderMemberPicker(containerId, fieldKey){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = `
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" placeholder="Search by name or membership no…" oninput="obMemberSearchInput('${containerId}','${fieldKey}',this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="const i=this.previousElementSibling; i.value=''; obMemberSearchInput('${containerId}','${fieldKey}',''); i.focus();">✕</span>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Selected</div>
+    <div id="${containerId}-selected" style="margin-bottom:10px"></div>
+    <div id="${containerId}-results" style="max-height:220px;overflow-y:auto"><div style="font-size:12px;color:var(--text3);font-style:italic">Type to search members…</div></div>
+  `;
+  obRenderMemberSelected(containerId, fieldKey);
+}
+
+// ── Contact import (CSV / vCard) ────────────────────────────────────────────
+// Parsed entirely client-side (no file upload middleware on the backend) —
+// just extracts phone numbers and posts the list. See backend/routes/
+// onboarding.js import-contacts for the matching logic and its limitations
+// (upload-only; there's no live device-contacts sync from a plain web app).
+function obParseContactsFile(text, filename){
+  const phones = new Set();
+  if(/\.vcf$/i.test(filename)){
+    text.split(/\r?\n/).forEach(line=>{
+      if(/^TEL/i.test(line)){
+        const val = line.split(':').pop().trim();
+        if(val) phones.add(val);
+      }
+    });
+  } else {
+    (text.match(/\+?\d[\d\s\-().]{6,}\d/g) || []).forEach(m=>phones.add(m.trim()));
+  }
+  return [...phones];
+}
+function obImportContactsFile(input){
+  const file = input.files && input.files[0];
+  const resultEl = document.getElementById('ob-q-contactsResult');
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const phones = obParseContactsFile(String(reader.result||''), file.name);
+    if(!phones.length){
+      if(resultEl) resultEl.textContent = 'No phone numbers found in that file.';
+      return;
+    }
+    if(resultEl) resultEl.textContent = `Found ${phones.length} contact${phones.length===1?'':'s'} — matching against members…`;
+    try{
+      const { matched, added } = await OnboardingAPI.importContacts(phones);
+      if(resultEl) resultEl.textContent = `${matched} of ${phones.length} contacts matched an existing member — ${added} newly added to My Universe.`;
+      showToast('Contacts imported');
+    }catch(e){
+      if(resultEl) resultEl.textContent = 'Import failed: '+e.message;
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Social connect toggles — intent flags only (no real OAuth integration
+// exists in this app), stored as { linkedin: true/false, email: true/false }. ──
+const SOCIAL_CONNECT_PLATFORMS = ['LinkedIn','Email','WhatsApp','Instagram'];
+function obRenderSocialConnects(){
+  const el = document.getElementById('ob-q-socialConnects');
+  if(!el) return;
+  el.innerHTML = SOCIAL_CONNECT_PLATFORMS.map(p=>{
+    const key = p.toLowerCase();
+    const on = !!(obProfile.social_connects||{})[key];
+    return `<label style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:13px;cursor:pointer">
+      <input type="checkbox" ${on?'checked':''} onchange="obToggleSocialConnect('${key}',this.checked)"> ${p}
+    </label>`;
+  }).join('');
+}
+function obToggleSocialConnect(key, checked){
+  obProfile.social_connects = obProfile.social_connects || {};
+  obProfile.social_connects[key] = checked;
+}
+
+// ── Contestant tagging (competitor / ex_colleague / ally) — saved immediately
+// per tag (separate table, not part of the batched "Save answers" blob).
+// overlap_pct is a rough heuristic computed server-side, not a real
+// probability — see backend/routes/onboarding.js computeOverlapPct. ──
+let _obContestantSearchDebounce = null;
+function obContestantSearchInput(q){
+  clearTimeout(_obContestantSearchDebounce);
+  _obContestantSearchDebounce = setTimeout(async ()=>{
+    const resultsEl = document.getElementById('ob-q-contestants-results');
+    if(!resultsEl) return;
+    if(!q || !q.trim()){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">Type to search members…</div>`; return; }
+    resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0">Searching…</div>`;
+    try{
+      const { voters } = await VotersAPI.list({ search:q, limit:10 });
+      resultsEl.innerHTML = (voters||[]).length ? voters.map(v=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px">
+          <span style="flex:1">${String(v.name||'').replace(/</g,'&lt;')} <span style="color:var(--text3);font-size:11px">${v.mno}</span></span>
+          <button class="btn-sm" style="font-size:11px" onclick="obTagContestant('${v.mno}','competitor')">Competitor</button>
+          <button class="btn-sm" style="font-size:11px" onclick="obTagContestant('${v.mno}','ex_colleague')">Ex-colleague</button>
+          <button class="btn-sm" style="font-size:11px" onclick="obTagContestant('${v.mno}','ally')">Ally</button>
+        </div>`).join('') : `<div style="font-size:12px;color:var(--text3);padding:4px 0">No matching members.</div>`;
+    }catch(e){ resultsEl.innerHTML = `<div style="font-size:12px;color:var(--danger)">Search failed: ${e.message}</div>`; }
+  }, 300);
+}
+async function obTagContestant(mno, tagType){
+  try{
+    await ContestantsAPI.tag(mno, tagType);
+    showToast('Tagged');
+    obLoadContestants();
+  }catch(e){ showToast('Failed to tag: '+e.message, 'error'); }
+}
+async function obRemoveContestantTag(id){
+  try{
+    await ContestantsAPI.remove(id);
+    obLoadContestants();
+  }catch(e){ showToast('Failed to remove: '+e.message, 'error'); }
+}
+const CONTESTANT_TAG_LABELS = { competitor: 'Competitor', ex_colleague: 'Ex-colleague / batchmate', ally: 'Ally' };
+async function obLoadContestants(){
+  const el = document.getElementById('ob-q-contestants-list');
+  if(!el) return;
+  try{
+    const { contestants } = await ContestantsAPI.list();
+    el.innerHTML = (contestants||[]).length ? contestants.map(c=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border)">
+        <span style="flex:1">${String(c.member_display_name||'').replace(/</g,'&lt;')}</span>
+        <span class="tag ca" style="font-size:10px">${CONTESTANT_TAG_LABELS[c.tag_type]||c.tag_type}</span>
+        ${c.overlap_pct!=null ? `<span style="color:var(--text3);font-size:11px">~${c.overlap_pct}%</span>` : ''}
+        <span style="cursor:pointer;color:var(--text3)" onclick="obRemoveContestantTag(${c.contestant_id})">✕</span>
+      </div>`).join('') : `<span style="font-size:12px;color:var(--text3)">No contestants tagged yet.</span>`;
+  }catch(e){ el.innerHTML = `<span style="font-size:12px;color:var(--danger)">Failed to load: ${e.message}</span>`; }
 }
 
 async function obSaveQuestionnaire(){
@@ -2019,6 +2272,25 @@ async function obSaveQuestionnaire(){
     if(statusEl) statusEl.textContent = '';
     showToast('Failed to save: '+err.message, 'error');
     return false;
+  }
+}
+
+// Saves the current answers first (so the shortlist rule reads up-to-date
+// city/firm picks), then re-runs the "simple overlap match" — any member
+// matching seeking/practice cities or past firms who isn't already in My
+// Universe gets added. Safe to click repeatedly.
+async function obApplyShortlist(){
+  const statusEl = document.getElementById('ob-save-status');
+  const saved = await obSaveQuestionnaire();
+  if(!saved) return;
+  try{
+    if(statusEl) statusEl.textContent = 'Matching…';
+    const { added, matched } = await OnboardingAPI.applyShortlist();
+    if(statusEl) statusEl.textContent = '';
+    showToast(added ? `Added ${added} new member${added===1?'':'s'} to My Universe (${matched} total matched)` : 'No new matches — everyone matching your answers is already in My Universe');
+  }catch(err){
+    if(statusEl) statusEl.textContent = '';
+    showToast('Failed to apply: '+err.message, 'error');
   }
 }
 
@@ -2232,6 +2504,17 @@ function toggleUnivFacetExpand(facet){
   univFacetUi[facet].expanded = !univFacetUi[facet].expanded;
   renderUnivFacetSidebar();
 }
+// Clears a search box and re-runs its own input handler immediately (skipping
+// the handler's debounce so clearing feels instant), used by the small "x"
+// button every search-input grew next to it.
+function clearSearchBox(inputId, handlerFnName){
+  const el = document.getElementById(inputId);
+  if(!el) return;
+  el.value = '';
+  el.focus();
+  const fn = window[handlerFnName];
+  if (typeof fn === 'function') fn();
+}
 function onUnivSearchInput(){
   clearTimeout(_univSearchDebounce);
   _univSearchDebounce = setTimeout(()=>{ univPage = 1; loadAndRenderUniverse(); }, 350);
@@ -2311,7 +2594,10 @@ function renderUnivFacetSidebar(){
         <a onclick="toggleUnivFacetSidebar()" style="font-size:14px;color:var(--text3);cursor:pointer;line-height:1" title="Close">✕</a>
       </div>
     </div>
-    <input type="text" id="univ-facet-common-search" placeholder="Search city, organisation, label…" value="${univFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setUnivFacetCommonSearch(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:4px;box-sizing:border-box">
+    <div style="position:relative;margin-bottom:4px">
+      <input type="text" id="univ-facet-common-search" placeholder="Search city, organisation, label…" value="${univFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setUnivFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="setUnivFacetCommonSearch('')">✕</span>
+    </div>
     ${renderUnivRangeFacet('PVS score','univ-pvs-min','univ-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderUnivRangeFacet('Age','univ-age-min','univ-age-max','ageMin','ageMax','Min','Max')}
     ${renderUnivFacetGroup('pref','Preference',{labelMap:{p1:'P1 Committed',p2:'P2 Persuadable',p3:'P3 Undecided',p4:'>P3',un:'Unassigned'}})}
@@ -2580,7 +2866,10 @@ function renderFacetSidebar(){
         <a onclick="toggleVoterFacetSidebar()" style="font-size:14px;color:var(--text3);cursor:pointer;line-height:1" title="Close">✕</a>
       </div>
     </div>
-    <input type="text" id="voter-facet-common-search" placeholder="Search city, organisation, label…" value="${voterFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setVoterFacetCommonSearch(this.value)" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;margin-bottom:4px;box-sizing:border-box">
+    <div style="position:relative;margin-bottom:4px">
+      <input type="text" id="voter-facet-common-search" placeholder="Search city, organisation, label…" value="${voterFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setVoterFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
+      <span class="search-clear-x" onclick="setVoterFacetCommonSearch('')">✕</span>
+    </div>
     ${renderRangeFacet('PVS score','voter-pvs-min','voter-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderRangeFacet('Age','voter-age-min','voter-age-max','ageMin','ageMax','Min','Max')}
     ${renderFacetGroup('city','City')}
@@ -3074,15 +3363,48 @@ function renderSummaryPager(containerId, page, total, goToPageFn){
 let cityPage = 1, cityTotal = 0, citySearchQ = '', _citySearchDebounce = null;
 let citySortCol = 'total', citySortDir = 'desc';
 const SUMMARY_SORT_COLS = ['total','in_universe','not_in_universe','p1','p2','p3','p4','un'];
+// 'summary' = full preference-tier breakdown, only reachable from the
+// Preference/Assigned Preference page's City-wise button. 'details' = the
+// sidebar Details section's plain city directory (no preference columns) —
+// set by showPage() from the nav item's {mode:'details'} opts.
+let citySummaryMode = 'summary';
+function cityColCount(){ return citySummaryMode==='details' ? 3 : 9; }
+function renderCityTableHead(){
+  const row = document.getElementById('city-thead-row');
+  if(!row) return;
+  const titleEl = document.getElementById('city-page-title');
+  const subEl = document.getElementById('city-page-sub');
+  if(titleEl) titleEl.textContent = citySummaryMode==='details' ? 'City' : 'City-wise preference summary';
+  if(subEl) subEl.textContent = citySummaryMode==='details'
+    ? 'Browse cities and member counts.'
+    : 'Member spread and preference split across your campaign cities.';
+  const cols = [
+    `<th>City</th>`,
+    `<th>Members <span class="sort-arrow" id="city-sort-total" onclick="citySortBy('total')" title="Sort by members">↕</span></th>`,
+    `<th>In Universe <span class="sort-arrow" id="city-sort-in_universe" onclick="citySortBy('in_universe')" title="Sort by in universe">↕</span></th>`,
+  ];
+  if(citySummaryMode !== 'details'){
+    cols.push(
+      `<th>Not in Universe <span class="sort-arrow" id="city-sort-not_in_universe" onclick="citySortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>`,
+      `<th>P1 <span class="sort-arrow" id="city-sort-p1" onclick="citySortBy('p1')" title="Sort by P1">↕</span></th>`,
+      `<th>P2 <span class="sort-arrow" id="city-sort-p2" onclick="citySortBy('p2')" title="Sort by P2">↕</span></th>`,
+      `<th>P3 <span class="sort-arrow" id="city-sort-p3" onclick="citySortBy('p3')" title="Sort by P3">↕</span></th>`,
+      `<th>&gt;P3 <span class="sort-arrow" id="city-sort-p4" onclick="citySortBy('p4')" title="Sort by >P3">↕</span></th>`,
+      `<th>Unassigned <span class="sort-arrow" id="city-sort-un" onclick="citySortBy('un')" title="Sort by unassigned">↕</span></th>`,
+    );
+  }
+  row.innerHTML = cols.join('');
+}
 async function renderCityTable(){
   const tbody = document.getElementById('city-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  const cc = cityColCount();
+  tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
     const { cities, total } = await DashboardAPI.city({ page: cityPage, limit: SUMMARY_PAGE_SIZE, search: citySearchQ, sort: citySortCol, dir: citySortDir });
     cityTotal = total || 0;
     if(!cities || !cities.length){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
       renderSummaryPager('city-pager', cityPage, cityTotal, 'cityGoToPage');
       updateSummarySortArrows('city', citySortCol, citySortDir);
       return;
@@ -3091,17 +3413,18 @@ async function renderCityTable(){
       <td><span style="color:var(--accent)">📍</span> <span style="cursor:pointer;color:var(--accent);font-weight:500" onclick="showPage('citydetail',{city:'${(c.city||'').replace(/'/g,"\\'")}'})">${c.city||'—'}</span></td>
       <td><b>${parseInt(c.total)||0}</b></td>
       <td><span class="count-box c1">● ${parseInt(c.in_universe)||0}</span></td>
+      ${citySummaryMode==='details' ? '' : `
       <td><span class="count-box cu">○ ${parseInt(c.not_in_universe)||0}</span></td>
       <td>${parseInt(c.p1)||0}</td>
       <td>${parseInt(c.p2)||0}</td>
       <td>${parseInt(c.p3)||0}</td>
       <td>${parseInt(c.p4)||0}</td>
-      <td>${parseInt(c.un)||0}</td>
+      <td>${parseInt(c.un)||0}</td>`}
     </tr>`).join('');
     renderSummaryPager('city-pager', cityPage, cityTotal, 'cityGoToPage');
     updateSummarySortArrows('city', citySortCol, citySortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function cityGoToPage(p){
@@ -3137,15 +3460,49 @@ function updateSummarySortArrows(prefix, activeCol, dir){
 
 let firmPage = 1, firmTotal = 0, firmSearchQ = '', firmTypeFilter = '', firmStatusFilter = '', _firmSearchDebounce = null;
 let firmSortCol = 'total', firmSortDir = 'desc';
+// See citySummaryMode above — same split: 'summary' (Preference page) shows
+// the full P1-P4 breakdown; 'details' (sidebar Details section) is a plain
+// organisation directory (name/reg no/type/members/in universe/status).
+let firmSummaryMode = 'summary';
+function firmColCount(){ return firmSummaryMode==='details' ? 5 : 11; }
+function renderFirmTableHead(){
+  const row = document.getElementById('firm-thead-row');
+  if(!row) return;
+  const titleEl = document.getElementById('firm-page-title');
+  const subEl = document.getElementById('firm-page-sub');
+  if(titleEl) titleEl.textContent = firmSummaryMode==='details' ? 'Organisation' : 'Organisation-wise preference summary';
+  if(subEl) subEl.textContent = firmSummaryMode==='details'
+    ? 'Browse organisations, member counts and status.'
+    : 'Preference split grouped by organisation.';
+  const cols = [
+    `<th>Organisation</th>`,
+    `<th>Type</th>`,
+    `<th>Members <span class="sort-arrow" id="firm-sort-total" onclick="firmSortBy('total')" title="Sort by members">↕</span></th>`,
+    `<th>In Universe <span class="sort-arrow" id="firm-sort-in_universe" onclick="firmSortBy('in_universe')" title="Sort by in universe">↕</span></th>`,
+  ];
+  if(firmSummaryMode !== 'details'){
+    cols.push(
+      `<th>Not in Universe <span class="sort-arrow" id="firm-sort-not_in_universe" onclick="firmSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>`,
+      `<th>P1 <span class="sort-arrow" id="firm-sort-p1" onclick="firmSortBy('p1')" title="Sort by P1">↕</span></th>`,
+      `<th>P2 <span class="sort-arrow" id="firm-sort-p2" onclick="firmSortBy('p2')" title="Sort by P2">↕</span></th>`,
+      `<th>P3 <span class="sort-arrow" id="firm-sort-p3" onclick="firmSortBy('p3')" title="Sort by P3">↕</span></th>`,
+      `<th>&gt;P3 <span class="sort-arrow" id="firm-sort-p4" onclick="firmSortBy('p4')" title="Sort by >P3">↕</span></th>`,
+      `<th>Unassigned <span class="sort-arrow" id="firm-sort-un" onclick="firmSortBy('un')" title="Sort by unassigned">↕</span></th>`,
+    );
+  }
+  cols.push(`<th>Status</th>`);
+  row.innerHTML = cols.join('');
+}
 async function renderFirmTable(){
   const tbody = document.getElementById('firm-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  const cc = firmColCount();
+  tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
     const { firms, total } = await DashboardAPI.firm({ page: firmPage, limit: SUMMARY_PAGE_SIZE, search: firmSearchQ, type: firmTypeFilter, status: firmStatusFilter, sort: firmSortCol, dir: firmSortDir });
     firmTotal = total || 0;
     if(!firms || !firms.length){
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
       renderSummaryPager('firm-pager', firmPage, firmTotal, 'firmGoToPage');
       updateSummarySortArrows('firm', firmSortCol, firmSortDir);
       return;
@@ -3153,22 +3510,25 @@ async function renderFirmTable(){
     tbody.innerHTML = firms.map(f=>{
       const safe = (f.firm||'').replace(/'/g,"\\'");
       const isCa = f.org_type==='CA';
+      const isActive = f.org_status==='ACTIVE';
       return `<tr>
       <td><div style="font-weight:500;cursor:pointer;color:var(--accent)" onclick="showPage('firmdetail',{firm:'${safe}'})">${f.firm||'—'}</div>${isCa&&f.org_reg_no?`<div style="font-size:11px;color:var(--text3)">${f.org_reg_no}</div>`:''}</td>
       <td><span class="tag ${isCa?'ca':''}" style="font-size:10px">${f.org_type||'—'}</span></td>
       <td><b>${parseInt(f.total)||0}</b></td>
       <td><span class="count-box c1">● ${parseInt(f.in_universe)||0}</span></td>
+      ${firmSummaryMode==='details' ? '' : `
       <td><span class="count-box cu">○ ${parseInt(f.not_in_universe)||0}</span></td>
       <td>${parseInt(f.p1)||0}</td>
       <td>${parseInt(f.p2)||0}</td>
       <td>${parseInt(f.p3)||0}</td>
       <td>${parseInt(f.p4)||0}</td>
-      <td>${parseInt(f.un)||0}</td>
+      <td>${parseInt(f.un)||0}</td>`}
+      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${f.org_status||'—'}</span></td>
     </tr>`;}).join('');
     renderSummaryPager('firm-pager', firmPage, firmTotal, 'firmGoToPage');
     updateSummarySortArrows('firm', firmSortCol, firmSortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function firmGoToPage(p){
@@ -3284,8 +3644,8 @@ async function renderCityDetail(cityName){
   const container = document.getElementById('citydetail-content');
   container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
   try{
-    const { cities } = await DashboardAPI.city({ search: cityName, limit: 50 });
-    const c = (cities||[]).find(x=>x.city===cityName) || (cities||[])[0];
+    const { cities } = await DashboardAPI.city({ search: cityName, limit: 500 });
+    const c = (cities||[]).find(x=>x.city===cityName);
     if(!c){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">City not found.</div>`; return; }
     container.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
@@ -3315,8 +3675,8 @@ async function renderFirmDetail(firmName){
   const container = document.getElementById('firmdetail-content');
   container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
   try{
-    const { firms } = await DashboardAPI.firm({ search: firmName, limit: 50 });
-    const f = (firms||[]).find(x=>x.firm===firmName) || (firms||[])[0];
+    const { firms } = await DashboardAPI.firm({ search: firmName, limit: 500 });
+    const f = (firms||[]).find(x=>x.firm===firmName);
     if(!f){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Organisation not found.</div>`; return; }
     const isActive = f.org_status==='ACTIVE';
     const safeFirmName = String(firmName).replace(/'/g,"\\'");
@@ -3362,15 +3722,47 @@ function toggleOrgStatus(orgId, newStatus, firmName){
 // ── INSTITUTE SUMMARY + DETAIL ──
 let institutePage = 1, instituteTotal = 0, instituteSearchQ = '', instituteTypeFilter = '', instituteStatusFilter = '', _instituteSearchDebounce = null;
 let instituteSortCol = 'total', instituteSortDir = 'desc';
+// See citySummaryMode/firmSummaryMode above — same split.
+let instituteSummaryMode = 'summary';
+function instituteColCount(){ return instituteSummaryMode==='details' ? 5 : 11; }
+function renderInstituteTableHead(){
+  const row = document.getElementById('institute-thead-row');
+  if(!row) return;
+  const titleEl = document.getElementById('institute-page-title');
+  const subEl = document.getElementById('institute-page-sub');
+  if(titleEl) titleEl.textContent = instituteSummaryMode==='details' ? 'Institute' : 'Institute-wise preference summary';
+  if(subEl) subEl.textContent = instituteSummaryMode==='details'
+    ? 'Browse institutes, member counts and status.'
+    : 'Preference split grouped by educational institution (universities & coaching).';
+  const cols = [
+    `<th>Institute</th>`,
+    `<th>Type</th>`,
+    `<th>Members <span class="sort-arrow" id="institute-sort-total" onclick="instituteSortBy('total')" title="Sort by members">↕</span></th>`,
+    `<th>In Universe <span class="sort-arrow" id="institute-sort-in_universe" onclick="instituteSortBy('in_universe')" title="Sort by in universe">↕</span></th>`,
+  ];
+  if(instituteSummaryMode !== 'details'){
+    cols.push(
+      `<th>Not in Universe <span class="sort-arrow" id="institute-sort-not_in_universe" onclick="instituteSortBy('not_in_universe')" title="Sort by not in universe">↕</span></th>`,
+      `<th>P1 <span class="sort-arrow" id="institute-sort-p1" onclick="instituteSortBy('p1')" title="Sort by P1">↕</span></th>`,
+      `<th>P2 <span class="sort-arrow" id="institute-sort-p2" onclick="instituteSortBy('p2')" title="Sort by P2">↕</span></th>`,
+      `<th>P3 <span class="sort-arrow" id="institute-sort-p3" onclick="instituteSortBy('p3')" title="Sort by P3">↕</span></th>`,
+      `<th>&gt;P3 <span class="sort-arrow" id="institute-sort-p4" onclick="instituteSortBy('p4')" title="Sort by >P3">↕</span></th>`,
+      `<th>Unassigned <span class="sort-arrow" id="institute-sort-un" onclick="instituteSortBy('un')" title="Sort by unassigned">↕</span></th>`,
+    );
+  }
+  cols.push(`<th>Status</th>`);
+  row.innerHTML = cols.join('');
+}
 async function renderInstituteTable(){
   const tbody = document.getElementById('institute-tbody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>';
+  const cc = instituteColCount();
+  tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
     const { institutes, total } = await DashboardAPI.institute({ page: institutePage, limit: SUMMARY_PAGE_SIZE, search: instituteSearchQ, type: instituteTypeFilter, status: instituteStatusFilter, sort: instituteSortCol, dir: instituteSortDir });
     instituteTotal = total || 0;
     if(!institutes || !institutes.length){
-      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
       renderSummaryPager('institute-pager', institutePage, instituteTotal, 'instituteGoToPage');
       updateSummarySortArrows('institute', instituteSortCol, instituteSortDir);
       return;
@@ -3383,18 +3775,19 @@ async function renderInstituteTable(){
       <td><span class="tag ca" style="font-size:10px">${it.institute_type||'—'}</span></td>
       <td><b>${parseInt(it.total)||0}</b></td>
       <td><span class="count-box c1">● ${parseInt(it.in_universe)||0}</span></td>
+      ${instituteSummaryMode==='details' ? '' : `
       <td><span class="count-box cu">○ ${parseInt(it.not_in_universe)||0}</span></td>
       <td>${parseInt(it.p1)||0}</td>
       <td>${parseInt(it.p2)||0}</td>
       <td>${parseInt(it.p3)||0}</td>
       <td>${parseInt(it.p4)||0}</td>
-      <td>${parseInt(it.un)||0}</td>
+      <td>${parseInt(it.un)||0}</td>`}
       <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${it.institute_status||'—'}</span></td>
     </tr>`;}).join('');
     renderSummaryPager('institute-pager', institutePage, instituteTotal, 'instituteGoToPage');
     updateSummarySortArrows('institute', instituteSortCol, instituteSortDir);
   } catch(err){
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--danger);padding:16px">${err.message}</td></tr>`;
   }
 }
 function instituteGoToPage(p){
@@ -3431,8 +3824,8 @@ async function renderInstituteDetail(instName){
   const container = document.getElementById('institutedetail-content');
   container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
   try{
-    const { institutes } = await DashboardAPI.institute({ search: instName, limit: 50 });
-    const it = (institutes||[]).find(x=>x.institute===instName) || (institutes||[])[0];
+    const { institutes } = await DashboardAPI.institute({ search: instName, limit: 500 });
+    const it = (institutes||[]).find(x=>x.institute===instName);
     if(!it){ container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Institute not found.</div>`; return; }
     const isActive = it.institute_status==='ACTIVE';
     const safeInstName = String(instName).replace(/'/g,"\\'");
@@ -4704,30 +5097,10 @@ async function loadAndRenderPrefs() {
 
 // Populate the My Universe page's City & Firm filter dropdowns from loaded data.
 // (The All Members page uses the facet sidebar instead — see renderFacetSidebar().)
-// ── API-BACKED toggleDnd ───────────────────────────────────────────────────────
-const _origToggleDnd = typeof toggleDnd === 'function' ? toggleDnd : null;
-function toggleDnd(id, btn) {
-  const turningOn = !memberDnd[id];
-  confirmAction(turningOn
-      ? 'Mark this voter as Do Not Disturb (DND)?'
-      : 'Remove the DND flag from this voter?', async () => {
-    try {
-      const result = await VotersAPI.toggleDnd(id);
-      memberDnd[id] = result.dnd;
-      renderVoters();
-      renderUniverse();
-      showToast(result.dnd ? 'DND set' : 'DND removed');
-    } catch(err) {
-      // Fallback to local state if API fails
-      memberDnd[id] = !memberDnd[id];
-      renderVoters();
-      showToast('DND updated (offline mode)');
-    }
-  }, 'Update DND status');
-}
+// The real DND toggle used by the profile page is toggleDndProfile() (above) —
+// it hits POST /api/voters/:id/dnd and refreshes the profile on success.
 
 // ── API-BACKED setPref ────────────────────────────────────────────────────────
-const _origSetPref = typeof setPref === 'function' ? setPref : null;
 function setPref(id, pref, btn) {
   const current = memberPrefs[id];
   let target = pref;

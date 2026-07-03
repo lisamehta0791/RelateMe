@@ -5,6 +5,7 @@ const jwt      = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const pool     = require('../config/db');
 const auth     = require('../middleware/auth');
+const { applyShortlistRule } = require('./onboarding');
 
 // ── POST /api/auth/register ────────────────────────────────────────────────
 // Creates a new user (starts with approval_status = 'Pending').
@@ -134,14 +135,18 @@ router.post('/login', async (req, res) => {
 
 // ── POST /api/auth/complete-onboarding ──────────────────────────────────────
 // Marks the first-run setup wizard as finished, so future logins skip straight
-// to My Universe instead of the wizard.
+// to My Universe instead of the wizard. Also runs the shortlist rule once, so
+// the candidate's My Universe isn't empty on their very first visit — it's
+// still safe to re-run later via POST /api/onboarding/apply-shortlist.
 router.post('/complete-onboarding', auth, async (req, res) => {
   try {
     await pool.execute(
       'UPDATE tbl_user_auth SET onboarding_completed_at = NOW() WHERE user_id = ?',
       [req.user.user_id]
     );
-    res.json({ success: true });
+    let shortlist = null;
+    try { shortlist = await applyShortlistRule(req.user.user_id); } catch (e) { console.error('Shortlist rule failed:', e); }
+    res.json({ success: true, shortlist });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to complete onboarding' });

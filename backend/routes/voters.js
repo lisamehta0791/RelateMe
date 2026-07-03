@@ -3,13 +3,13 @@
 //
 // Member identity is anchored on tbl_ca_member.icai_membership_no, NOT on
 // tbl_voter.voter_record_id — voter-roll data is per-election and may not be
-// loaded for every member, but ICAI membership always is. tbl_voter itself is
-// CONFIRMED/locked and unused by the app now — tbl_voter_voting_history was
-// extended to carry the same per-election-year voter detail fields (voter_id,
-// booth no, type, sub-type, status) alongside `voted`, so "Voter Details" and
-// "Voting History" are one table/section instead of two with the same grain.
-// The booth chain (tbl_booth_master -> tbl_booth_address_master) is
-// left-joined in purely for city; a member with none of that data still shows
+// loaded for every member, but ICAI membership always is. tbl_voter_voting_history
+// has been dropped — tbl_voter (one row per icai_membership_no + election_year,
+// enforced by a UNIQUE constraint) is now the single source for voter-roll detail
+// AND per-election voting status: voter_status itself is 'Voted'/'Silent'/'Postal',
+// so there's no separate `voted` Y/N column anymore (derived below for API/frontend
+// shape compatibility). The booth chain (tbl_booth_master -> tbl_booth_address_master)
+// is left-joined in purely for city; a member with none of that data still shows
 // up everywhere.
 const router = require('express').Router();
 const pool   = require('../config/db');
@@ -24,9 +24,9 @@ function joinsSql() {
   return `
   FROM tbl_ca_member m
   JOIN  tbl_ca_member_fact f ON f.icai_membership_no = m.icai_membership_no
-  LEFT JOIN tbl_voter_voting_history v ON v.icai_membership_no = m.icai_membership_no
-                        AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter_voting_history)
-  LEFT JOIN tbl_booth_master bm        ON bm.election_year = v.election_year AND bm.boothno = v.voter_booth_no
+  LEFT JOIN tbl_voter v ON v.icai_membership_no = m.icai_membership_no
+                        AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter)
+  LEFT JOIN tbl_booth_master bm        ON bm.election_year = v.election_year AND bm.boothno = v.boothno_new
   LEFT JOIN tbl_booth_address_master bam ON bam.booth_address_id = bm.booth_address_id
   LEFT JOIN tbl_voter_preference vp ON vp.icai_membership_no = m.icai_membership_no
   LEFT JOIN tbl_dnd              d  ON d.icai_membership_no  = m.icai_membership_no
@@ -54,7 +54,7 @@ function baseSql() {
     v.voter_id,
     v.election_year,
     bam.booth_city                             AS region,
-    v.voter_booth_no                           AS booth_no,
+    v.boothno_new                              AS booth_no,
     v.voter_type,
     v.voter_sub_type,
     v.voter_status,
@@ -201,16 +201,18 @@ router.get('/', async (req, res) => {
     const lim        = Math.max(1, Math.min(parseInt(limit) || 100, 1000));
     const pg         = Math.max(1, parseInt(page) || 1);
     const offset     = (pg - 1) * lim;
-    const [rows]     = await pool.execute(
-      `${baseSql()} ${WHERE} ORDER BY ${ORDER} LIMIT ${lim} OFFSET ${offset}`,
-      params
-    );
-
-    // Count for pagination (re-uses the same params incl. uid for the universe join)
-    const [cnt] = await pool.execute(
-      `SELECT COUNT(*) AS total ${joinsSql()} ${WHERE}`,
-      params
-    );
+    // The page of rows and the pagination count are independent reads over the
+    // same filters — run them concurrently instead of one after the other.
+    const [[rows], [cnt]] = await Promise.all([
+      pool.execute(
+        `${baseSql()} ${WHERE} ORDER BY ${ORDER} LIMIT ${lim} OFFSET ${offset}`,
+        params
+      ),
+      pool.execute(
+        `SELECT COUNT(*) AS total ${joinsSql()} ${WHERE}`,
+        params
+      ),
+    ]);
 
     res.json({ voters: rows, total: cnt[0].total, page: pg, limit: lim });
   } catch (err) {
@@ -237,11 +239,16 @@ router.get('/facets', async (req, res) => {
     };
     const out = {};
 
-    for (const [key, col] of Object.entries(DIMENSIONS)) {
+    // Every dimension below is an independent COUNT/GROUP BY over the same
+    // joinsSql() chain — none depend on each other's results, so they're all
+    // fired concurrently instead of one at a time (was 7 sequential full-join
+    // queries per /facets call).
+    const dimensionEntries = Object.entries(DIMENSIONS);
+    const dimensionPromises = dimensionEntries.map(([key, col]) => {
       const excludeKey = key === 'org' ? 'firm' : key === 'firmType' ? 'firm_type' : key;
       const { conditions, params } = buildVoterConditions(req.query, [excludeKey]);
       const allConditions = [`${col} IS NOT NULL`, `${col} != ''`, ...conditions];
-      const [rows] = await pool.execute(
+      return pool.execute(
         `SELECT ${col} AS val, COUNT(*) AS cnt
          ${joinsSql()}
          WHERE ${allConditions.join(' AND ')}
@@ -250,33 +257,28 @@ router.get('/facets', async (req, res) => {
          LIMIT 300`,
         [uid, ...params]
       );
-      out[key] = rows;
-    }
+    });
 
     // Universe is boolean, not a GROUP BY dimension.
-    {
+    const universePromise = (() => {
       const { conditions, params } = buildVoterConditions(req.query, ['universe']);
       const WHERE = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-      const [[row]] = await pool.execute(
+      return pool.execute(
         `SELECT
            SUM(CASE WHEN uu.icai_membership_no IS NOT NULL THEN 1 ELSE 0 END) AS in_count,
            SUM(CASE WHEN uu.icai_membership_no IS NULL THEN 1 ELSE 0 END) AS out_count
          ${joinsSql()} ${WHERE}`,
         [uid, ...params]
       );
-      out.universe = [
-        { val: 'in',  cnt: row.in_count || 0 },
-        { val: 'out', cnt: row.out_count || 0 },
-      ];
-    }
+    })();
 
     // Label is a separate query (not part of the generic DIMENSIONS loop) — a
     // member can have several labels, and joining tbl_member_label into the
     // shared FROM chain would multiply that member's row everywhere else.
-    {
+    const labelPromise = (() => {
       const { conditions, params } = buildVoterConditions(req.query, ['label']);
       const WHERE = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-      const [rows] = await pool.execute(
+      return pool.execute(
         `SELECT ml.label_text AS val, COUNT(DISTINCT m.icai_membership_no) AS cnt
          ${joinsSql()}
          JOIN tbl_member_label ml ON ml.icai_membership_no = m.icai_membership_no
@@ -286,8 +288,20 @@ router.get('/facets', async (req, res) => {
          LIMIT 300`,
         [uid, ...params]
       );
-      out.label = rows;
-    }
+    })();
+
+    const [dimensionResults, [[universeRow]], [labelRows]] = await Promise.all([
+      Promise.all(dimensionPromises),
+      universePromise,
+      labelPromise,
+    ]);
+
+    dimensionEntries.forEach(([key], i) => { out[key] = dimensionResults[i][0]; });
+    out.universe = [
+      { val: 'in',  cnt: universeRow.in_count || 0 },
+      { val: 'out', cnt: universeRow.out_count || 0 },
+    ];
+    out.label = labelRows;
 
     res.json(out);
   } catch (err) {
@@ -307,112 +321,109 @@ router.get('/:id', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Member not found' });
     const voter = rows[0];
 
-    // Phones — all statuses (active shown first, inactive below, see profile UI)
-    const [phones] = await pool.execute(
-      `SELECT phone_id, phone_country_code, phone_number, phone_number_full,
-              phone_type, is_whatsapp, phone_status, phone_is_primary
-       FROM tbl_member_phones WHERE icai_membership_no = ?
-       ORDER BY (phone_status = 'Active') DESC, phone_is_primary DESC, phone_type`,
-      [mno]
-    );
-
-    // Emails — all statuses
-    const [emails] = await pool.execute(
-      `SELECT email_id, email_address, email_type, email_status, email_is_primary
-       FROM tbl_member_emails WHERE icai_membership_no = ?
-       ORDER BY (email_status = 'Active') DESC, email_is_primary DESC, email_type`,
-      [mno]
-    );
-
-    // Social profiles
-    const [socials] = await pool.execute(
-      `SELECT social_id, social_platform, social_handle_url, social_media_type, social_status
-       FROM tbl_member_social_profiles WHERE icai_membership_no = ?`,
-      [mno]
-    );
-
-    // Work history (current — work_status = 'Active' — sorts first)
-    const [work] = await pool.execute(
-      `SELECT wh.wh_id, o.org_name, o.org_type, o.org_structure, wh.designation,
-              wh.org_reg_no, wh.from_year, wh.to_year, wh.work_type, wh.work_status, wh.remark
-       FROM tbl_work_history wh
-       JOIN tbl_org_details o ON o.org_id = wh.org_id
-       WHERE wh.icai_membership_no = ?
-       ORDER BY (wh.work_status = 'Active') DESC, wh.from_year DESC`,
-      [mno]
-    );
-
-    // Education history
-    const [education] = await pool.execute(
-      `SELECT eh.edu_hist_id, eh.edu_course_type, eh.qualification_name,
-              eh.from_year, eh.to_year, eh.edu_status,
-              i.institute_name, o.org_name AS articleship_firm
-       FROM tbl_voter_education_history eh
-       LEFT JOIN tbl_institute_details i ON i.institute_id = eh.institute_id
-       LEFT JOIN tbl_org_details o       ON o.org_id       = eh.org_id
-       WHERE eh.icai_membership_no = ?
-       ORDER BY eh.from_year DESC`,
-      [mno]
-    );
-
-    // ICAI roles / committees
-    const [roles] = await pool.execute(
-      `SELECT role_id, role_type, role_value, from_year, to_year
-       FROM tbl_voter_icai_roles WHERE icai_membership_no = ?
-       ORDER BY from_year DESC`,
-      [mno]
-    );
-
-    // Activities (interactions)
-    const [activities] = await pool.execute(
-      `SELECT a.activity_id, a.activity_type, a.activity_date, a.description,
-              a.followup_date, a.followup_note, a.preference_outcome,
-              u.full_name AS logged_by
-       FROM tbl_activity a
-       JOIN tbl_activity_participant ap ON ap.activity_id = a.activity_id
-       LEFT JOIN tbl_app_user u ON u.user_id = a.created_by
-       WHERE ap.icai_membership_no = ?
-       ORDER BY a.activity_date DESC
-       LIMIT 50`,
-      [mno]
-    );
-
-    // Education from ICAI master
-    const [icai_edu] = await pool.execute(
-      `SELECT qualification, specialisation, institution_name, university_name,
-              graduation_year, study_mode, education_status
-       FROM tbl_member_education WHERE icai_membership_no = ?`,
-      [mno]
-    );
-
-    // DND detail
-    const [dndRow] = await pool.execute(
-      `SELECT dnd_id, dnd_from, reason, dnd_status FROM tbl_dnd
-       WHERE icai_membership_no = ? AND dnd_status = 'Active' LIMIT 1`,
-      [mno]
-    );
-
-    // Voter details + voting history — one table, one row per election year
-    // (merged: this used to be two separate fetches against tbl_voter and
-    // tbl_voter_voting_history, which had the same grain).
-    const [voting_history] = await pool.execute(
-      `SELECT vh.vh_id, vh.election_year, vh.voter_id, vh.voter_booth_no,
-              vh.voter_type, vh.voter_sub_type, vh.voter_status, vh.voted,
-              vh.updated_at, u.full_name AS updated_by_name
-       FROM tbl_voter_voting_history vh
-       LEFT JOIN tbl_app_user u ON u.user_id = vh.updated_by
-       WHERE vh.icai_membership_no = ?
-       ORDER BY vh.election_year DESC`,
-      [mno]
-    );
-
-    // Call list / meet list / competitor tags + free-text labels
-    const [tagRows] = await pool.execute(
-      'SELECT tag_type FROM tbl_member_action_tag WHERE icai_membership_no = ?', [mno]
-    );
-    const [labelRows] = await pool.execute(
-      'SELECT label_id, label_text FROM tbl_member_label WHERE icai_membership_no = ? ORDER BY created_at DESC', [mno]
-    );
+    // Everything below is an independent read keyed on the same mno — run them
+    // all concurrently instead of round-tripping one at a time (was ~10
+    // sequential queries per profile load).
+    const [
+      [phones], [emails], [socials], [work], [education], [roles],
+      [activities], [icai_edu], [dndRow], [voting_history], [tagRows], [labelRows],
+    ] = await Promise.all([
+      // Phones — all statuses (active shown first, inactive below, see profile UI)
+      pool.execute(
+        `SELECT phone_id, phone_country_code, phone_number, phone_number_full,
+                phone_type, is_whatsapp, phone_status, phone_is_primary
+         FROM tbl_member_phones WHERE icai_membership_no = ?
+         ORDER BY (phone_status = 'Active') DESC, phone_is_primary DESC, phone_type`,
+        [mno]
+      ),
+      // Emails — all statuses
+      pool.execute(
+        `SELECT email_id, email_address, email_type, email_status, email_is_primary
+         FROM tbl_member_emails WHERE icai_membership_no = ?
+         ORDER BY (email_status = 'Active') DESC, email_is_primary DESC, email_type`,
+        [mno]
+      ),
+      // Social profiles
+      pool.execute(
+        `SELECT social_id, social_platform, social_handle_url, social_media_type, social_status
+         FROM tbl_member_social_profiles WHERE icai_membership_no = ?`,
+        [mno]
+      ),
+      // Work history (current — work_status = 'Active' — sorts first)
+      pool.execute(
+        `SELECT wh.wh_id, o.org_name, o.org_type, o.org_structure, wh.designation,
+                wh.org_reg_no, wh.from_year, wh.to_year, wh.work_type, wh.work_status, wh.remark
+         FROM tbl_work_history wh
+         JOIN tbl_org_details o ON o.org_id = wh.org_id
+         WHERE wh.icai_membership_no = ?
+         ORDER BY (wh.work_status = 'Active') DESC, wh.from_year DESC`,
+        [mno]
+      ),
+      // Education history
+      pool.execute(
+        `SELECT eh.edu_hist_id, eh.edu_course_type, eh.qualification_name,
+                eh.from_year, eh.to_year, eh.edu_status,
+                i.institute_name, o.org_name AS articleship_firm
+         FROM tbl_voter_education_history eh
+         LEFT JOIN tbl_institute_details i ON i.institute_id = eh.institute_id
+         LEFT JOIN tbl_org_details o       ON o.org_id       = eh.org_id
+         WHERE eh.icai_membership_no = ?
+         ORDER BY eh.from_year DESC`,
+        [mno]
+      ),
+      // ICAI roles / committees
+      pool.execute(
+        `SELECT role_id, role_type, role_value, from_year, to_year
+         FROM tbl_voter_icai_roles WHERE icai_membership_no = ?
+         ORDER BY from_year DESC`,
+        [mno]
+      ),
+      // Activities (interactions)
+      pool.execute(
+        `SELECT a.activity_id, a.activity_type, a.activity_date, a.description,
+                a.followup_date, a.followup_note, a.preference_outcome,
+                u.full_name AS logged_by
+         FROM tbl_activity a
+         JOIN tbl_activity_participant ap ON ap.activity_id = a.activity_id
+         LEFT JOIN tbl_app_user u ON u.user_id = a.created_by
+         WHERE ap.icai_membership_no = ?
+         ORDER BY a.activity_date DESC
+         LIMIT 50`,
+        [mno]
+      ),
+      // Education from ICAI master
+      pool.execute(
+        `SELECT qualification, specialisation, institution_name, university_name,
+                graduation_year, study_mode, education_status
+         FROM tbl_member_education WHERE icai_membership_no = ?`,
+        [mno]
+      ),
+      // DND detail
+      pool.execute(
+        `SELECT dnd_id, dnd_from, reason, dnd_status FROM tbl_dnd
+         WHERE icai_membership_no = ? AND dnd_status = 'Active' LIMIT 1`,
+        [mno]
+      ),
+      // Voter details + voting history — one row per election year in tbl_voter.
+      // `voted` is derived (Silent -> N, else Y) to keep the existing API/frontend
+      // shape working without a separate voted column.
+      pool.execute(
+        `SELECT v.voter_record_id AS vh_id, v.election_year, v.voter_id,
+                v.boothno_new AS voter_booth_no, v.boothno_old,
+                v.voter_type, v.voter_sub_type, v.voter_status,
+                CASE WHEN v.voter_status = 'Silent' THEN 'N' ELSE 'Y' END AS voted,
+                v.updated_at, u.full_name AS updated_by_name
+         FROM tbl_voter v
+         LEFT JOIN tbl_app_user u ON u.user_id = v.updated_by
+         WHERE v.icai_membership_no = ?
+         ORDER BY v.election_year DESC`,
+        [mno]
+      ),
+      // Call list / meet list / competitor tags
+      pool.execute('SELECT tag_type FROM tbl_member_action_tag WHERE icai_membership_no = ?', [mno]),
+      // Free-text labels
+      pool.execute('SELECT label_id, label_text FROM tbl_member_label WHERE icai_membership_no = ? ORDER BY created_at DESC', [mno]),
+    ]);
 
     res.json({
       voter,
@@ -727,13 +738,17 @@ router.patch('/:id/cop', async (req, res) => {
 });
 
 // ── PUT /api/voters/:id/voting-history ──────────────────────────────────────
-// Upsert one election-year voter+voting record, then recompute PVS. This is
-// the merged "Voter Details" + "Voting History" table — one row per election
-// year, carrying both the voter-roll detail fields and whether they voted.
-// Body: { election_year, voted: 'Y'|'N', voter_id?, voter_booth_no?, voter_type?, voter_sub_type?, voter_status? }
+// Upsert one election-year voter-roll record into tbl_voter, then recompute PVS.
+// Body: { election_year, voted: 'Y'|'N', voter_id?, voter_booth_no?, voter_type?, voter_sub_type? }
+// tbl_voter.voter_status is now 'Voted'/'Silent'/'Postal' (it replaced the old
+// separate `voted` Y/N column) — derived here from `voted` + voter_type rather
+// than accepted directly from the client, since the frontend's legacy
+// voter_status options ('Active'/'Inactive'/'Blocked') no longer apply.
+// voter_id and voter_type are NOT NULL on tbl_voter (unlike the old
+// tbl_voter_voting_history, where they were optional) — both are required
+// when creating a voter-roll row for a member for the first time.
 const VOTER_TYPES = ['Booth', 'Postal'];
 const VOTER_SUB_TYPES = ['Booth-Region', 'Booth-Other Region', 'Postal-Domestic', 'Postal-Foreign'];
-const VOTER_STATUSES = ['Active', 'Inactive', 'Blocked'];
 
 router.put('/:id/voting-history', async (req, res) => {
   const mno = req.params.id;
@@ -741,33 +756,38 @@ router.put('/:id/voting-history', async (req, res) => {
   const {
     election_year, voted,
     voter_id = null, voter_booth_no = null,
-    voter_type = null, voter_sub_type = null, voter_status = null,
+    voter_type = null, voter_sub_type = null,
   } = req.body;
   const yr = parseInt(election_year);
   if (!Number.isFinite(yr)) return res.status(400).json({ error: 'Valid election_year required' });
   if (!['Y', 'N'].includes(voted)) return res.status(400).json({ error: "voted must be 'Y' or 'N'" });
   if (voter_type && !VOTER_TYPES.includes(voter_type)) return res.status(400).json({ error: 'Invalid voter_type' });
   if (voter_sub_type && !VOTER_SUB_TYPES.includes(voter_sub_type)) return res.status(400).json({ error: 'Invalid voter_sub_type' });
-  if (voter_status && !VOTER_STATUSES.includes(voter_status)) return res.status(400).json({ error: 'Invalid voter_status' });
 
   try {
-    // A partial call (just toggling `voted` on an existing row) sends the
-    // other fields as null — COALESCE keeps whatever was already on file
-    // instead of wiping it out. voter_status falls back to 'Active' only on
-    // first insert (NOT NULL column with no row to fall back to yet).
+    const [existing] = await pool.execute(
+      'SELECT voter_id, voter_type FROM tbl_voter WHERE icai_membership_no = ? AND election_year = ?',
+      [mno, yr]
+    );
+    const finalVoterId = voter_id || (existing[0] && existing[0].voter_id) || null;
+    const finalVoterType = voter_type || (existing[0] && existing[0].voter_type) || null;
+    if (!finalVoterId || !finalVoterType) {
+      return res.status(400).json({ error: 'voter_id and voter_type are required to create a new voter-roll row' });
+    }
+    const voterStatus = voted === 'N' ? 'Silent' : (finalVoterType === 'Postal' ? 'Postal' : 'Voted');
+
     await pool.execute(
-      `INSERT INTO tbl_voter_voting_history
-         (icai_membership_no, election_year, voted, voter_id, voter_booth_no, voter_type, voter_sub_type, voter_status, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO tbl_voter
+         (icai_membership_no, election_year, voter_id, boothno_new, voter_type, voter_sub_type, voter_status, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (icai_membership_no, election_year) DO UPDATE SET
-         voted = EXCLUDED.voted,
-         voter_id = COALESCE(EXCLUDED.voter_id, voter_id),
-         voter_booth_no = COALESCE(EXCLUDED.voter_booth_no, voter_booth_no),
-         voter_type = COALESCE(EXCLUDED.voter_type, voter_type),
-         voter_sub_type = COALESCE(EXCLUDED.voter_sub_type, voter_sub_type),
-         voter_status = COALESCE(EXCLUDED.voter_status, voter_status),
+         voter_id = COALESCE(EXCLUDED.voter_id, tbl_voter.voter_id),
+         boothno_new = COALESCE(EXCLUDED.boothno_new, tbl_voter.boothno_new),
+         voter_type = COALESCE(EXCLUDED.voter_type, tbl_voter.voter_type),
+         voter_sub_type = COALESCE(EXCLUDED.voter_sub_type, tbl_voter.voter_sub_type),
+         voter_status = EXCLUDED.voter_status,
          updated_by = EXCLUDED.updated_by, updated_at = NOW()`,
-      [mno, yr, voted, voter_id, voter_booth_no, voter_type, voter_sub_type, voter_status || 'Active', uid, uid]
+      [mno, yr, finalVoterId, voter_booth_no, finalVoterType, voter_sub_type, voterStatus, uid, uid]
     );
     // Voting history feeds PVS — recompute this member.
     let pvsResult = null;
@@ -786,7 +806,7 @@ router.delete('/:id/voting-history/:year', async (req, res) => {
   const uid = req.user.user_id;
   try {
     await pool.execute(
-      'DELETE FROM tbl_voter_voting_history WHERE icai_membership_no = ? AND election_year = ?',
+      'DELETE FROM tbl_voter WHERE icai_membership_no = ? AND election_year = ?',
       [mno, yr]
     );
     try { await pvs.recalcVoter(mno, uid); } catch (e) { /* non-fatal */ }

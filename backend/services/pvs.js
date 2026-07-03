@@ -144,8 +144,8 @@ async function computeVoterScore(mno) {
             f.member_enrollment_date
      FROM tbl_ca_member m
      JOIN tbl_ca_member_fact f ON f.icai_membership_no = m.icai_membership_no
-     LEFT JOIN tbl_voter_voting_history v ON v.icai_membership_no = m.icai_membership_no
-                           AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter_voting_history)
+     LEFT JOIN tbl_voter v ON v.icai_membership_no = m.icai_membership_no
+                           AND v.election_year = (SELECT MAX(election_year) FROM tbl_voter)
      WHERE m.icai_membership_no = ?`,
     [mno]
   );
@@ -168,14 +168,16 @@ async function computeVoterScore(mno) {
     [mno]
   );
 
-  // Voting history — count "voted=Y" in the last 3 election years on record
+  // Voting history — count "voted" (voter_status Voted/Postal, not Silent) in
+  // the last 3 election years on record. tbl_voter has no separate `voted`
+  // column anymore — voter_status itself is Voted/Silent/Postal.
   const [vh] = await pool.execute(
-    `SELECT voted FROM tbl_voter_voting_history
+    `SELECT voter_status FROM tbl_voter
      WHERE icai_membership_no = ?
      ORDER BY election_year DESC LIMIT 3`,
     [mno]
   );
-  const votedCountLast3 = vh.filter(r => r.voted === 'Y').length;
+  const votedCountLast3 = vh.filter(r => r.voter_status !== 'Silent').length;
 
   // ICAI roles
   const [roles] = await pool.execute(
