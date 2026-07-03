@@ -89,7 +89,7 @@ function baseSql() {
 // Builds WHERE conditions from query params. `exclude` skips a dimension's own
 // filter — used by /facets to compute "what would this option's count be"
 // against every OTHER active filter.
-const FILTER_KEYS = ['search', 'pref', 'pvs', 'catype', 'city', 'firm', 'firm_type', 'age', 'universe', 'label', 'tag'];
+const FILTER_KEYS = ['search', 'pref', 'pvs', 'catype', 'city', 'firm', 'firm_type', 'age', 'universe', 'label', 'tag', 'institute'];
 // Facet filters accept comma-separated values for multi-select (e.g. city=Chennai,Mumbai).
 function toList(v) {
   if (v == null || v === '') return [];
@@ -99,7 +99,7 @@ function buildVoterConditions(query, exclude = []) {
   const {
     search = '', pref = '', pvs_min = 0, pvs_max = 1000,
     catype = '', firm = '', firm_type = '', city = '',
-    age_min = '', age_max = '', universe = '', label = '', tag = '',
+    age_min = '', age_max = '', universe = '', label = '', tag = '', institute = '',
   } = query;
   const conditions = [];
   const params = [];
@@ -172,6 +172,17 @@ function buildVoterConditions(query, exclude = []) {
     )`);
     params.push(tag);
   }
+  // Institute detail page's member list — education history isn't part of the
+  // shared joinsSql() chain (a member can have several entries there too), so
+  // this is an EXISTS check against tbl_voter_education_history by institute_id,
+  // same reasoning as label/tag above.
+  if (!skip('institute') && institute) {
+    conditions.push(`EXISTS (
+      SELECT 1 FROM tbl_voter_education_history eh2
+      WHERE eh2.icai_membership_no = m.icai_membership_no AND eh2.institute_id = ?
+    )`);
+    params.push(parseInt(institute));
+  }
   return { conditions, params };
 }
 
@@ -227,9 +238,21 @@ router.get('/', async (req, res) => {
 // counts respect every OTHER active filter but not its own — same "what would
 // this checkbox show if I added it" semantics as the old client-side version,
 // just computed server-side now that the roll is 19,000+ rows.
+// `q` (optional) is the Filters popover's "common search" box — narrows the
+// city/org/label facet options to ones actually matching that text (server-
+// side, against the full dataset), instead of the old behavior of filtering
+// whatever 300-row-capped list happened to already be in memory. `org` also
+// matches against org_reg_no, since a registration number is a very common
+// way to look up a firm. If `q` is purely digits, it's also checked directly
+// against icai_membership_no and returned as `memberMatches` — a membership
+// number isn't a facet/category, so it doesn't fit the checkbox-list model;
+// it's surfaced as a direct "jump to this member" result instead.
+const DIMENSION_SEARCH_EXTRA_COL = { org: 'cur_org.org_reg_no' };
+
 router.get('/facets', async (req, res) => {
   try {
     const uid = req.user.user_id;
+    const q = (req.query.q || '').trim();
     const DIMENSIONS = {
       city:     'bam.booth_city',
       org:      'cur_org.org_name',
@@ -248,6 +271,12 @@ router.get('/facets', async (req, res) => {
       const excludeKey = key === 'org' ? 'firm' : key === 'firmType' ? 'firm_type' : key;
       const { conditions, params } = buildVoterConditions(req.query, [excludeKey]);
       const allConditions = [`${col} IS NOT NULL`, `${col} != ''`, ...conditions];
+      const qParams = [];
+      if (q && (key === 'city' || key === 'org')) {
+        const extraCol = DIMENSION_SEARCH_EXTRA_COL[key];
+        if (extraCol) { allConditions.push(`(${col} ILIKE ? OR ${extraCol} ILIKE ?)`); qParams.push(`%${q}%`, `%${q}%`); }
+        else { allConditions.push(`${col} ILIKE ?`); qParams.push(`%${q}%`); }
+      }
       return pool.execute(
         `SELECT ${col} AS val, COUNT(*) AS cnt
          ${joinsSql()}
@@ -255,7 +284,7 @@ router.get('/facets', async (req, res) => {
          GROUP BY ${col}
          ORDER BY cnt DESC
          LIMIT 300`,
-        [uid, ...params]
+        [uid, ...params, ...qParams]
       );
     });
 
@@ -277,7 +306,10 @@ router.get('/facets', async (req, res) => {
     // shared FROM chain would multiply that member's row everywhere else.
     const labelPromise = (() => {
       const { conditions, params } = buildVoterConditions(req.query, ['label']);
-      const WHERE = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+      const conds = [...conditions];
+      const qParams = [];
+      if (q) { conds.push('ml.label_text ILIKE ?'); qParams.push(`%${q}%`); }
+      const WHERE = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
       return pool.execute(
         `SELECT ml.label_text AS val, COUNT(DISTINCT m.icai_membership_no) AS cnt
          ${joinsSql()}
@@ -286,14 +318,24 @@ router.get('/facets', async (req, res) => {
          GROUP BY ml.label_text
          ORDER BY cnt DESC
          LIMIT 300`,
-        [uid, ...params]
+        [uid, ...params, ...qParams]
       );
     })();
 
-    const [dimensionResults, [[universeRow]], [labelRows]] = await Promise.all([
+    // Membership-number lookup — only meaningful when `q` looks like one
+    // (all digits); a name/city search shouldn't try to match it.
+    const memberMatchPromise = (q && /^\d+$/.test(q))
+      ? pool.execute(
+          `SELECT icai_membership_no, member_display_name FROM tbl_ca_member WHERE icai_membership_no ILIKE ? ORDER BY icai_membership_no LIMIT 10`,
+          [`%${q}%`]
+        )
+      : Promise.resolve([[]]);
+
+    const [dimensionResults, [[universeRow]], [labelRows], [memberMatches]] = await Promise.all([
       Promise.all(dimensionPromises),
       universePromise,
       labelPromise,
+      memberMatchPromise,
     ]);
 
     dimensionEntries.forEach(([key], i) => { out[key] = dimensionResults[i][0]; });
@@ -302,6 +344,7 @@ router.get('/facets', async (req, res) => {
       { val: 'out', cnt: universeRow.out_count || 0 },
     ];
     out.label = labelRows;
+    out.memberMatches = memberMatches;
 
     res.json(out);
   } catch (err) {

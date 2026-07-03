@@ -900,6 +900,15 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
             <div id="univ-facet-sidebar" class="facet-popover" onclick="event.stopPropagation()"></div>
           </div>
         </div>
+        <!-- Mass action bar — no "Add to universe" here, everyone shown is already in it -->
+        <div class="mass-action-bar" id="univ-mass-action-bar">
+          <input type="checkbox" id="univ-select-all-check" onchange="selectAllUnivMembers(this.checked)" style="width:16px;height:16px;accent-color:var(--accent)">
+          <span id="univ-selected-count" style="font-size:13px;font-weight:500;color:var(--accent)">0 selected</span>
+          <button class="btn-sm" onclick="bulkAddToCallListUniv()">📞 Add to call list</button>
+          <button class="btn-sm" onclick="bulkAddToMeetUniv()">🤝 Add to meet</button>
+          <button class="btn-sm" onclick="bulkLabelSelectedUniv()">🏷️ Label</button>
+          <button class="btn-sm" onclick="clearUnivSelection()">Clear selection</button>
+        </div>
         <div class="filter-bar">
           <div class="search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -910,6 +919,7 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
           <table class="tbl" id="univ-table">
             <thead><tr>
+              <th style="width:36px"><input type="checkbox" id="univ-header-check" onchange="selectAllUnivMembers(this.checked)" style="width:14px;height:14px;accent-color:var(--accent)"></th>
               <th>Name / Membership no. <span class="sort-arrow" id="usort-arrow-name" onclick="toggleUnivColSort('name')" title="Sort by name">↕</span></th>
               <th>Organisation · Role <span class="sort-arrow" id="usort-arrow-org" onclick="toggleUnivColSort('org')" title="Sort by organisation">↕</span></th>
               <th>Location <span class="sort-arrow" id="usort-arrow-city" onclick="toggleUnivColSort('city')" title="Sort by city">↕</span></th>
@@ -1038,10 +1048,14 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
           <div><div class="page-title" id="city-page-title">City</div><div class="page-sub" id="city-page-sub">Member spread and preference split across your campaign cities.</div></div>
-          <div class="search-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" class="search-input" placeholder="Search city…" oninput="onCitySearchInput()" id="city-search">
-            <span class="search-clear-x" onclick="clearSearchBox('city-search','onCitySearchInput')">✕</span>
+          <div>
+            <div class="search-wrap" style="position:relative">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" placeholder="Search city… (pick multiple)" oninput="onCitySearchTypeahead(this.value)" onfocus="onCitySearchTypeahead(this.value)" id="city-search">
+              <span class="search-clear-x" onclick="clearSearchBox('city-search','onCitySearchTypeahead')">✕</span>
+              <div id="city-search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto"></div>
+            </div>
+            <div id="city-search-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -1059,11 +1073,15 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
           <div><div class="page-title" id="firm-page-title">Organisation details</div><div class="page-sub" id="firm-page-sub">Preference split grouped by organisation.</div></div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div class="search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" class="search-input" placeholder="Search organisation…" oninput="onFirmSearchInput()" id="firm-search">
-              <span class="search-clear-x" onclick="clearSearchBox('firm-search','onFirmSearchInput')">✕</span>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <div>
+              <div class="search-wrap" style="position:relative">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" placeholder="Search organisation… (pick multiple)" oninput="onFirmSearchTypeahead(this.value)" onfocus="onFirmSearchTypeahead(this.value)" id="firm-search">
+                <span class="search-clear-x" onclick="clearSearchBox('firm-search','onFirmSearchTypeahead')">✕</span>
+                <div id="firm-search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto"></div>
+              </div>
+              <div id="firm-search-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
             </div>
             <select onchange="onFirmTypeFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
               <option value="">All types</option>
@@ -1075,7 +1093,7 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
-            <button class="btn-sm primary" onclick="openAddOrgModal()">+ Add Org</button>
+            <button class="btn-sm primary" id="firm-add-btn" onclick="openAddOrgModal()">+ Add Org</button>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -1103,11 +1121,15 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
       <div style="padding:32px 36px;max-width:900px">
         <div class="page-header">
           <div><div class="page-title" id="institute-page-title">Institute detais</div><div class="page-sub" id="institute-page-sub">Preference split grouped by educational institution (universities &amp; coaching).</div></div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div class="search-wrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" class="search-input" placeholder="Search institute…" oninput="onInstituteSearchInput()" id="institute-search">
-              <span class="search-clear-x" onclick="clearSearchBox('institute-search','onInstituteSearchInput')">✕</span>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <div>
+              <div class="search-wrap" style="position:relative">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" placeholder="Search institute… (pick multiple)" oninput="onInstituteSearchTypeahead(this.value)" onfocus="onInstituteSearchTypeahead(this.value)" id="institute-search">
+                <span class="search-clear-x" onclick="clearSearchBox('institute-search','onInstituteSearchTypeahead')">✕</span>
+                <div id="institute-search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:240px;overflow-y:auto"></div>
+              </div>
+              <div id="institute-search-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
             </div>
             <select onchange="onInstituteTypeFilterChange(this.value)" style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
               <option value="">All types</option>
@@ -1121,7 +1143,7 @@ input:not(:placeholder-shown) ~ .search-clear-x{display:block}
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
-            <button class="btn-sm primary" onclick="openAddInstituteModal()">+ Add Institution</button>
+            <button class="btn-sm primary" id="institute-add-btn" onclick="openAddInstituteModal()">+ Add Institution</button>
           </div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
@@ -2474,6 +2496,7 @@ function buildUnivQueryParams(){
     pref:      univFacets.pref.size===1 ? [...univFacets.pref][0] : '',
     label:     [...univFacets.label].join(','),
     universe:  'in', // permanent scope — this IS the universe page
+    q:         univFacetCommonSearch,
   };
 }
 function resetUnivFilters(){
@@ -2496,9 +2519,12 @@ function toggleUnivFacet(facet, value, checked){
   univPage = 1;
   loadAndRenderUniverse();
 }
+let _univFacetCommonSearchDebounce = null;
 function setUnivFacetCommonSearch(value){
   univFacetCommonSearch = value;
-  renderUnivFacetSidebar();
+  renderUnivFacetSidebar(); // instant feedback for the input itself
+  clearTimeout(_univFacetCommonSearchDebounce);
+  _univFacetCommonSearchDebounce = setTimeout(loadUnivFacets, 300);
 }
 function toggleUnivFacetExpand(facet){
   univFacetUi[facet].expanded = !univFacetUi[facet].expanded;
@@ -2595,9 +2621,10 @@ function renderUnivFacetSidebar(){
       </div>
     </div>
     <div style="position:relative;margin-bottom:4px">
-      <input type="text" id="univ-facet-common-search" placeholder="Search city, organisation, label…" value="${univFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setUnivFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
+      <input type="text" id="univ-facet-common-search" placeholder="Search city, organisation, label, or exact membership/reg no…" value="${univFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setUnivFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
       <span class="search-clear-x" onclick="setUnivFacetCommonSearch('')">✕</span>
     </div>
+    ${renderMemberMatches(univFacetsData && univFacetsData.memberMatches)}
     ${renderUnivRangeFacet('PVS score','univ-pvs-min','univ-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderUnivRangeFacet('Age','univ-age-min','univ-age-max','ageMin','ageMax','Min','Max')}
     ${renderUnivFacetGroup('pref','Preference',{labelMap:{p1:'P1 Committed',p2:'P2 Persuadable',p3:'P3 Undecided',p4:'>P3',un:'Unassigned'}})}
@@ -2635,7 +2662,9 @@ function renderUniverse(){
   const tbody = document.getElementById('univ-tbody');
   tbody.innerHTML = data.map(m=>{
     const p = memberPrefs[m.id];
-    return `<tr style="cursor:pointer" onclick="showPage('memberprofile',{memberId:'${m.id}'})">
+    const checked = selectedUnivMembers.has(m.id) ? 'checked' : '';
+    return `<tr id="urow-${m.id}" style="cursor:pointer" onclick="showPage('memberprofile',{memberId:'${m.id}'})">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="urow-check" ${checked} onchange="toggleUnivSelect('${m.id}',this.checked)"></td>
       <td><div class="name-cell"><div>
         <div style="font-weight:500;font-size:13px;color:var(--accent)">${m.name}</div>
         <div style="font-size:11px;color:var(--text3)">${m.mno} · ${m.region} · ${m.catype}</div>
@@ -2645,7 +2674,7 @@ function renderUniverse(){
       <td style="font-size:13px">${m.age}</td>
       <td>${prefPill(p)}</td>
       <td class="pvs">${m.pvs}</td>
-      <td><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span></td>
+      <td>${(m.support && m.support!=='Unknown') ? `<span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span>` : ''}</td>
     </tr>`;
   }).join('');
   updateUnivSortArrows();
@@ -2734,6 +2763,7 @@ function buildVoterQueryParams(){
     label:     [...voterFacets.label].join(','),
     tag:       voterForcedTag,
     universe:  voterFacets.universe.size===1 ? [...voterFacets.universe][0] : '',
+    q:         voterFacetCommonSearch,
   };
 }
 
@@ -2772,9 +2802,12 @@ function toggleVoterFacet(facet, value, checked){
 }
 // One shared search box at the top of the popover, filtering every facet
 // group's visible options at once (instead of a search input per group).
+let _voterFacetCommonSearchDebounce = null;
 function setVoterFacetCommonSearch(value){
   voterFacetCommonSearch = value;
-  renderFacetSidebar();
+  renderFacetSidebar(); // instant feedback for the input itself
+  clearTimeout(_voterFacetCommonSearchDebounce);
+  _voterFacetCommonSearchDebounce = setTimeout(loadVoterFacets, 300);
 }
 function toggleFacetExpand(facet){
   voterFacetUi[facet].expanded = !voterFacetUi[facet].expanded;
@@ -2796,6 +2829,21 @@ async function loadVoterFacets(){
   if(sidebarEl && sidebarEl.classList.contains('open')) renderFacetSidebar();
 }
 
+// Renders the "membership number" direct-match results in the Filters
+// popover — a numeric search isn't a facet/category, so instead of a
+// checkbox it's a straight jump-to-profile link.
+function renderMemberMatches(matches){
+  if(!matches || !matches.length) return '';
+  return `
+    <div style="border:1px solid var(--border2);border-radius:var(--r);padding:8px;margin-bottom:4px;background:var(--surface2)">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Matching members</div>
+      ${matches.map(m=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer" onclick="showPage('memberprofile',{memberId:'${m.icai_membership_no}'})">
+          <span style="flex:1;font-size:12px;color:var(--accent)">${String(m.member_display_name||'').replace(/</g,'&lt;')}</span>
+          <span style="font-size:11px;color:var(--text3)">${m.icai_membership_no}</span>
+        </div>`).join('')}
+    </div>`;
+}
 function renderFacetGroup(facet, label, opts){
   opts = opts || {};
   const facetRows = (voterFacetsData && voterFacetsData[facet]) || [];
@@ -2867,9 +2915,10 @@ function renderFacetSidebar(){
       </div>
     </div>
     <div style="position:relative;margin-bottom:4px">
-      <input type="text" id="voter-facet-common-search" placeholder="Search city, organisation, label…" value="${voterFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setVoterFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
+      <input type="text" id="voter-facet-common-search" placeholder="Search city, organisation, label, or exact membership/reg no…" value="${voterFacetCommonSearch.replace(/"/g,'&quot;')}" oninput="setVoterFacetCommonSearch(this.value)" style="width:100%;padding:7px 26px 7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;box-sizing:border-box">
       <span class="search-clear-x" onclick="setVoterFacetCommonSearch('')">✕</span>
     </div>
+    ${renderMemberMatches(voterFacetsData && voterFacetsData.memberMatches)}
     ${renderRangeFacet('PVS score','voter-pvs-min','voter-pvs-max','pvsMin','pvsMax','0','1000')}
     ${renderRangeFacet('Age','voter-age-min','voter-age-max','ageMin','ageMax','Min','Max')}
     ${renderFacetGroup('city','City')}
@@ -3028,6 +3077,72 @@ function clearSelection(){
   document.querySelectorAll('#voters-tbody .row-check').forEach(cb=>cb.checked=false);
   const hc=document.getElementById('header-check'); if(hc) hc.checked=false;
   updateMassActionBar();
+}
+
+// ── My Universe bulk selection — same call-list/meet/label actions as All
+// Members, minus "Add to universe" (everyone shown here already is one). ──
+let selectedUnivMembers = new Set();
+function toggleUnivSelect(id,checked){
+  if(checked) selectedUnivMembers.add(id); else selectedUnivMembers.delete(id);
+  updateUnivMassActionBar();
+}
+function updateUnivMassActionBar(){
+  const bar = document.getElementById('univ-mass-action-bar');
+  if(!bar) return;
+  if(selectedUnivMembers.size>0){
+    bar.classList.add('visible');
+    document.getElementById('univ-selected-count').textContent = `${selectedUnivMembers.size} selected`;
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+function selectAllUnivMembers(checked){
+  document.querySelectorAll('#univ-tbody .urow-check').forEach(cb=>{
+    cb.checked = checked;
+    const row = cb.closest('tr');
+    const id = row.id.replace('urow-','');
+    if(checked) selectedUnivMembers.add(id); else selectedUnivMembers.delete(id);
+  });
+  const hc=document.getElementById('univ-header-check'); if(hc) hc.checked=checked;
+  updateUnivMassActionBar();
+}
+function clearUnivSelection(){
+  selectedUnivMembers.clear();
+  document.querySelectorAll('#univ-tbody .urow-check').forEach(cb=>cb.checked=false);
+  const hc=document.getElementById('univ-header-check'); if(hc) hc.checked=false;
+  const sac=document.getElementById('univ-select-all-check'); if(sac) sac.checked=false;
+  updateUnivMassActionBar();
+}
+function bulkAddToCallListUniv(){
+  const ids = [...selectedUnivMembers];
+  if(!ids.length) return;
+  VotersAPI.bulkTag(ids, 'call_list').then(()=>{
+    showToast(`${ids.length} added to call list`);
+    clearUnivSelection();
+  }).catch(err=>showToast('Failed to add to call list: '+err.message,'error'));
+}
+function bulkAddToMeetUniv(){
+  const ids = [...selectedUnivMembers];
+  if(!ids.length) return;
+  VotersAPI.bulkTag(ids, 'meet_list').then(()=>{
+    showToast(`${ids.length} added to meet list`);
+    clearUnivSelection();
+  }).catch(err=>showToast('Failed to add to meet list: '+err.message,'error'));
+}
+function bulkLabelSelectedUniv(){
+  const ids = [...selectedUnivMembers];
+  if(!ids.length) return;
+  showFormModal({
+    title: `Label ${ids.length} member${ids.length>1?'s':''}`,
+    submitLabel: 'Apply label',
+    fields: [ { key:'label_text', label:'Label', required:true, placeholder:'e.g. Donor, Volunteer, Key influencer', full:true } ],
+    onSubmit: (vals)=>{
+      VotersAPI.bulkLabel(ids, vals.label_text).then(()=>{
+        showToast(`Labelled ${ids.length} member${ids.length>1?'s':''} "${vals.label_text}"`);
+        clearUnivSelection();
+      }).catch(err=>showToast('Failed to apply label: '+err.message,'error'));
+    }
+  });
 }
 function addToUniverse(id,btn){
   const already = addedToUniverse.has(id);
@@ -3361,6 +3476,7 @@ function renderSummaryPager(containerId, page, total, goToPageFn){
 }
 
 let cityPage = 1, cityTotal = 0, citySearchQ = '', _citySearchDebounce = null;
+let citySelectedNames = new Set(); // multi-select city picks — sent comma-joined as `search`
 let citySortCol = 'total', citySortDir = 'desc';
 const SUMMARY_SORT_COLS = ['total','in_universe','not_in_universe','p1','p2','p3','p4','un'];
 // 'summary' = full preference-tier breakdown, only reachable from the
@@ -3401,7 +3517,7 @@ async function renderCityTable(){
   const cc = cityColCount();
   tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
-    const { cities, total } = await DashboardAPI.city({ page: cityPage, limit: SUMMARY_PAGE_SIZE, search: citySearchQ, sort: citySortCol, dir: citySortDir });
+    const { cities, total } = await DashboardAPI.city({ page: cityPage, limit: SUMMARY_PAGE_SIZE, search: [...citySelectedNames].join(','), sort: citySortCol, dir: citySortDir });
     cityTotal = total || 0;
     if(!cities || !cities.length){
       tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
@@ -3433,14 +3549,52 @@ function cityGoToPage(p){
   cityPage = next;
   renderCityTable();
 }
-function onCitySearchInput(){
+// Multi-select city search — type to see matching cities (from the full
+// booth-address-master list, not just this page's current 50 rows), check
+// several, each becomes a chip; the table then filters to any of them.
+function onCitySearchTypeahead(q){
   clearTimeout(_citySearchDebounce);
-  _citySearchDebounce = setTimeout(()=>{
-    citySearchQ = document.getElementById('city-search').value;
-    cityPage = 1;
-    renderCityTable();
-  }, 350);
+  _citySearchDebounce = setTimeout(async ()=>{
+    const dd = document.getElementById('city-search-dropdown');
+    if(!dd) return;
+    if(!q || !q.trim()){ dd.style.display='none'; return; }
+    try{
+      const { cities } = await DashboardAPI.cityOptions({ search:q });
+      if(!cities || !cities.length){
+        dd.innerHTML = `<div style="padding:8px 10px;font-size:12px;color:var(--text3)">No matching cities.</div>`;
+      } else {
+        dd.innerHTML = cities.map(c=>{
+          const checked = citySelectedNames.has(c.city) ? 'checked' : '';
+          const safe = String(c.city).replace(/'/g,"\\'");
+          return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;cursor:pointer">
+            <input type="checkbox" ${checked} onchange="toggleCitySearchChip('${safe}',this.checked)">
+            <span style="flex:1">${String(c.city).replace(/</g,'&lt;')}</span>
+            <span style="color:var(--text3);font-size:11px">${parseInt(c.total)||0} CAs</span>
+          </label>`;
+        }).join('');
+      }
+      dd.style.display='block';
+    }catch(e){ dd.style.display='none'; }
+  }, 300);
 }
+function toggleCitySearchChip(city, checked){
+  if(checked) citySelectedNames.add(city); else citySelectedNames.delete(city);
+  renderCitySearchChips();
+  cityPage = 1;
+  renderCityTable();
+}
+function renderCitySearchChips(){
+  const el = document.getElementById('city-search-chips');
+  if(!el) return;
+  el.innerHTML = [...citySelectedNames].map(c=>{
+    const safe = String(c).replace(/'/g,"\\'");
+    return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px">${String(c).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="toggleCitySearchChip('${safe}',false)">✕</span></span>`;
+  }).join('');
+}
+document.addEventListener('click', (e)=>{
+  const dd = document.getElementById('city-search-dropdown');
+  if(dd && !e.target.closest('#city-search') && !e.target.closest('#city-search-dropdown')) dd.style.display='none';
+});
 function citySortBy(col){
   if(citySortCol===col){ citySortDir = citySortDir==='desc'?'asc':'desc'; }
   else { citySortCol = col; citySortDir = 'desc'; }
@@ -3459,6 +3613,7 @@ function updateSummarySortArrows(prefix, activeCol, dir){
 }
 
 let firmPage = 1, firmTotal = 0, firmSearchQ = '', firmTypeFilter = '', firmStatusFilter = '', _firmSearchDebounce = null;
+let firmSelectedNames = new Set(); // multi-select org picks — sent comma-joined as `search`
 let firmSortCol = 'total', firmSortDir = 'desc';
 // See citySummaryMode above — same split: 'summary' (Preference page) shows
 // the full P1-P4 breakdown; 'details' (sidebar Details section) is a plain
@@ -3492,6 +3647,10 @@ function renderFirmTableHead(){
   }
   cols.push(`<th>Status</th>`);
   row.innerHTML = cols.join('');
+  // "+ Add Org" is a data-management action — only relevant when browsing
+  // via the sidebar's Details section, not the Preference summary view.
+  const addBtn = document.getElementById('firm-add-btn');
+  if(addBtn) addBtn.style.display = firmSummaryMode==='details' ? '' : 'none';
 }
 async function renderFirmTable(){
   const tbody = document.getElementById('firm-tbody');
@@ -3499,7 +3658,7 @@ async function renderFirmTable(){
   const cc = firmColCount();
   tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
-    const { firms, total } = await DashboardAPI.firm({ page: firmPage, limit: SUMMARY_PAGE_SIZE, search: firmSearchQ, type: firmTypeFilter, status: firmStatusFilter, sort: firmSortCol, dir: firmSortDir });
+    const { firms, total } = await DashboardAPI.firm({ page: firmPage, limit: SUMMARY_PAGE_SIZE, search: [...firmSelectedNames].join(','), type: firmTypeFilter, status: firmStatusFilter, sort: firmSortCol, dir: firmSortDir });
     firmTotal = total || 0;
     if(!firms || !firms.length){
       tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
@@ -3523,7 +3682,7 @@ async function renderFirmTable(){
       <td>${parseInt(f.p3)||0}</td>
       <td>${parseInt(f.p4)||0}</td>
       <td>${parseInt(f.un)||0}</td>`}
-      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${f.org_status||'—'}</span></td>
+      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${f.org_status||'—'}</span>${firmSummaryMode==='details' ? ` <span class="edit-icon" onclick="toggleOrgStatusInList(${f.org_id},'${isActive?'INACTIVE':'ACTIVE'}')">Edit</span>` : ''}</td>
     </tr>`;}).join('');
     renderSummaryPager('firm-pager', firmPage, firmTotal, 'firmGoToPage');
     updateSummarySortArrows('firm', firmSortCol, firmSortDir);
@@ -3537,14 +3696,50 @@ function firmGoToPage(p){
   firmPage = next;
   renderFirmTable();
 }
-function onFirmSearchInput(){
+// Multi-select organisation search — same pattern as City above.
+function onFirmSearchTypeahead(q){
   clearTimeout(_firmSearchDebounce);
-  _firmSearchDebounce = setTimeout(()=>{
-    firmSearchQ = document.getElementById('firm-search').value;
-    firmPage = 1;
-    renderFirmTable();
-  }, 350);
+  _firmSearchDebounce = setTimeout(async ()=>{
+    const dd = document.getElementById('firm-search-dropdown');
+    if(!dd) return;
+    if(!q || !q.trim()){ dd.style.display='none'; return; }
+    try{
+      const { firms } = await DashboardAPI.firm({ search:q, limit:20 });
+      if(!firms || !firms.length){
+        dd.innerHTML = `<div style="padding:8px 10px;font-size:12px;color:var(--text3)">No matching organisations.</div>`;
+      } else {
+        dd.innerHTML = firms.map(f=>{
+          const checked = firmSelectedNames.has(f.firm) ? 'checked' : '';
+          const safe = String(f.firm).replace(/'/g,"\\'");
+          return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;cursor:pointer">
+            <input type="checkbox" ${checked} onchange="toggleFirmSearchChip('${safe}',this.checked)">
+            <span style="flex:1">${String(f.firm||'').replace(/</g,'&lt;')}</span>
+            <span style="color:var(--text3);font-size:11px">${parseInt(f.total)||0}</span>
+          </label>`;
+        }).join('');
+      }
+      dd.style.display='block';
+    }catch(e){ dd.style.display='none'; }
+  }, 300);
 }
+function toggleFirmSearchChip(firm, checked){
+  if(checked) firmSelectedNames.add(firm); else firmSelectedNames.delete(firm);
+  renderFirmSearchChips();
+  firmPage = 1;
+  renderFirmTable();
+}
+function renderFirmSearchChips(){
+  const el = document.getElementById('firm-search-chips');
+  if(!el) return;
+  el.innerHTML = [...firmSelectedNames].map(f=>{
+    const safe = String(f).replace(/'/g,"\\'");
+    return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px">${String(f).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="toggleFirmSearchChip('${safe}',false)">✕</span></span>`;
+  }).join('');
+}
+document.addEventListener('click', (e)=>{
+  const dd = document.getElementById('firm-search-dropdown');
+  if(dd && !e.target.closest('#firm-search') && !e.target.closest('#firm-search-dropdown')) dd.style.display='none';
+});
 function onFirmTypeFilterChange(val){
   firmTypeFilter = val;
   firmPage = 1;
@@ -3640,6 +3835,46 @@ function openAddInstituteModal(prefill){
 // master can run into the thousands, so this can't rely on whatever happens
 // to be in the client-side MEMBERS cache from the last list page viewed).
 // The full preference breakdown lives on the *summary* list pages instead.
+// Shared member-list block for the City/Organisation/Institute detail pages —
+// same universe badge as All Members (renderVoters' univBadge), so a member
+// shown here reads identically whether you found them from the roster or
+// drilled in from a city/firm/institute.
+async function renderDetailMemberList(containerId, votersParams){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3)">Loading members…</div>`;
+  try{
+    const { voters, total } = await VotersAPI.list({ ...votersParams, limit:200, sort:'name' });
+    if(!voters || !voters.length){
+      el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3)">No members found.</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:20px 0 8px">Members</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+        <table class="tbl">
+          <thead><tr><th>Name / Membership no.</th><th>Organisation · Role</th><th>City</th><th>Age</th><th>PVS</th></tr></thead>
+          <tbody>${voters.map(m=>{
+            const univBadge = m.in_universe ? '<span style="background:var(--p1bg);color:var(--p1);border:1px solid var(--p1bd);border-radius:4px;font-size:9px;font-weight:700;padding:1px 5px;margin-left:5px;vertical-align:middle">★ Universe</span>' : '';
+            return `<tr style="cursor:pointer" onclick="showPage('memberprofile',{memberId:'${m.mno}'})">
+              <td><div class="name-cell"><div>
+                <div style="font-weight:500;font-size:13px;color:var(--accent)">${m.name}${univBadge}</div>
+                <div style="font-size:11px;color:var(--text3)">${m.mno}</div>
+              </div></div></td>
+              <td><div style="font-size:13px">${m.org_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${m.designation||''}</div></td>
+              <td style="font-size:13px">${m.region||'—'}</td>
+              <td style="font-size:13px">${m.age??'—'}</td>
+              <td class="pvs">${m.pvs??'—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+      ${total>voters.length ? `<div style="font-size:12px;color:var(--text3);padding:8px 2px">Showing ${voters.length} of ${total} members.</div>` : ''}
+    `;
+  }catch(err){
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger)">${err.message}</div>`;
+  }
+}
 async function renderCityDetail(cityName){
   const container = document.getElementById('citydetail-content');
   container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text3)">Loading…</div>`;
@@ -3658,7 +3893,9 @@ async function renderCityDetail(cityName){
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(c.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(c.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
         </div>
-      </div>`;
+      </div>
+      <div id="citydetail-members"></div>`;
+    renderDetailMemberList('citydetail-members', { city: cityName });
   }catch(err){
     container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
   }
@@ -3693,7 +3930,7 @@ async function renderFirmDetail(firmName){
             <div class="field-label">Status</div>
             <div class="field-val" style="font-size:13px;display:flex;align-items:center;gap:10px">
               ${masterStatusBadge(f.org_status)}
-              <button class="btn-sm" style="font-size:11px" onclick="toggleOrgStatus(${f.org_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeFirmName}')">${isActive?'Mark Inactive':'Mark Active'}</button>
+              ${firmSummaryMode==='details' ? `<button class="btn-sm" style="font-size:11px" onclick="toggleOrgStatus(${f.org_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeFirmName}')">${isActive?'Mark Inactive':'Mark Active'}</button>` : ''}
             </div>
           </div>
         </div>
@@ -3704,7 +3941,9 @@ async function renderFirmDetail(firmName){
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(f.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(f.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
         </div>
-      </div>`;
+      </div>
+      <div id="firmdetail-members"></div>`;
+    renderDetailMemberList('firmdetail-members', { firm: f.org_id });
   }catch(err){
     container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
   }
@@ -3718,9 +3957,21 @@ function toggleOrgStatus(orgId, newStatus, firmName){
     }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
   }, 'Update status');
 }
+// Same action, triggered inline from the Organisation list row — re-renders
+// the table in place instead of navigating to the single-entity detail page.
+function toggleOrgStatusInList(orgId, newStatus){
+  confirmAction(`Mark this organisation as ${newStatus==='ACTIVE'?'Active':'Inactive'}?`, async ()=>{
+    try{
+      await OrgsAPI.updateStatus(orgId, newStatus);
+      showToast('Status updated');
+      renderFirmTable();
+    }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
+  }, 'Update status');
+}
 
 // ── INSTITUTE SUMMARY + DETAIL ──
 let institutePage = 1, instituteTotal = 0, instituteSearchQ = '', instituteTypeFilter = '', instituteStatusFilter = '', _instituteSearchDebounce = null;
+let instituteSelectedNames = new Set(); // multi-select institute picks — sent comma-joined as `search`
 let instituteSortCol = 'total', instituteSortDir = 'desc';
 // See citySummaryMode/firmSummaryMode above — same split.
 let instituteSummaryMode = 'summary';
@@ -3752,6 +4003,10 @@ function renderInstituteTableHead(){
   }
   cols.push(`<th>Status</th>`);
   row.innerHTML = cols.join('');
+  // "+ Add Institution" is a data-management action — only relevant when
+  // browsing via the sidebar's Details section, not the Preference summary view.
+  const addBtn = document.getElementById('institute-add-btn');
+  if(addBtn) addBtn.style.display = instituteSummaryMode==='details' ? '' : 'none';
 }
 async function renderInstituteTable(){
   const tbody = document.getElementById('institute-tbody');
@@ -3759,7 +4014,7 @@ async function renderInstituteTable(){
   const cc = instituteColCount();
   tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">Loading…</td></tr>`;
   try {
-    const { institutes, total } = await DashboardAPI.institute({ page: institutePage, limit: SUMMARY_PAGE_SIZE, search: instituteSearchQ, type: instituteTypeFilter, status: instituteStatusFilter, sort: instituteSortCol, dir: instituteSortDir });
+    const { institutes, total } = await DashboardAPI.institute({ page: institutePage, limit: SUMMARY_PAGE_SIZE, search: [...instituteSelectedNames].join(','), type: instituteTypeFilter, status: instituteStatusFilter, sort: instituteSortCol, dir: instituteSortDir });
     instituteTotal = total || 0;
     if(!institutes || !institutes.length){
       tbody.innerHTML = `<tr><td colspan="${cc}" style="text-align:center;color:var(--text3);padding:16px">No data yet.</td></tr>`;
@@ -3782,7 +4037,7 @@ async function renderInstituteTable(){
       <td>${parseInt(it.p3)||0}</td>
       <td>${parseInt(it.p4)||0}</td>
       <td>${parseInt(it.un)||0}</td>`}
-      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${it.institute_status||'—'}</span></td>
+      <td><span class="tag ${isActive?'ca':''}" style="font-size:10px">${it.institute_status||'—'}</span>${instituteSummaryMode==='details' ? ` <span class="edit-icon" onclick="toggleInstituteStatusInList(${it.institute_id},'${isActive?'INACTIVE':'ACTIVE'}')">Edit</span>` : ''}</td>
     </tr>`;}).join('');
     renderSummaryPager('institute-pager', institutePage, instituteTotal, 'instituteGoToPage');
     updateSummarySortArrows('institute', instituteSortCol, instituteSortDir);
@@ -3796,14 +4051,50 @@ function instituteGoToPage(p){
   institutePage = next;
   renderInstituteTable();
 }
-function onInstituteSearchInput(){
+// Multi-select institute search — same pattern as City/Organisation above.
+function onInstituteSearchTypeahead(q){
   clearTimeout(_instituteSearchDebounce);
-  _instituteSearchDebounce = setTimeout(()=>{
-    instituteSearchQ = document.getElementById('institute-search').value;
-    institutePage = 1;
-    renderInstituteTable();
-  }, 350);
+  _instituteSearchDebounce = setTimeout(async ()=>{
+    const dd = document.getElementById('institute-search-dropdown');
+    if(!dd) return;
+    if(!q || !q.trim()){ dd.style.display='none'; return; }
+    try{
+      const { institutes } = await InstitutesAPI.list(q);
+      if(!institutes || !institutes.length){
+        dd.innerHTML = `<div style="padding:8px 10px;font-size:12px;color:var(--text3)">No matching institutes.</div>`;
+      } else {
+        dd.innerHTML = institutes.map(i=>{
+          const checked = instituteSelectedNames.has(i.institute_name) ? 'checked' : '';
+          const safe = String(i.institute_name).replace(/'/g,"\\'");
+          return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;cursor:pointer">
+            <input type="checkbox" ${checked} onchange="toggleInstituteSearchChip('${safe}',this.checked)">
+            <span style="flex:1">${String(i.institute_name||'').replace(/</g,'&lt;')}</span>
+            <span style="color:var(--text3);font-size:11px">${parseInt(i.member_count)||0}</span>
+          </label>`;
+        }).join('');
+      }
+      dd.style.display='block';
+    }catch(e){ dd.style.display='none'; }
+  }, 300);
 }
+function toggleInstituteSearchChip(name, checked){
+  if(checked) instituteSelectedNames.add(name); else instituteSelectedNames.delete(name);
+  renderInstituteSearchChips();
+  institutePage = 1;
+  renderInstituteTable();
+}
+function renderInstituteSearchChips(){
+  const el = document.getElementById('institute-search-chips');
+  if(!el) return;
+  el.innerHTML = [...instituteSelectedNames].map(n=>{
+    const safe = String(n).replace(/'/g,"\\'");
+    return `<span class="tag ca" style="display:inline-flex;align-items:center;gap:6px">${String(n).replace(/</g,'&lt;')} <span style="cursor:pointer" onclick="toggleInstituteSearchChip('${safe}',false)">✕</span></span>`;
+  }).join('');
+}
+document.addEventListener('click', (e)=>{
+  const dd = document.getElementById('institute-search-dropdown');
+  if(dd && !e.target.closest('#institute-search') && !e.target.closest('#institute-search-dropdown')) dd.style.display='none';
+});
 function onInstituteTypeFilterChange(val){
   instituteTypeFilter = val;
   institutePage = 1;
@@ -3840,7 +4131,7 @@ async function renderInstituteDetail(instName){
           <div class="field-label">Status</div>
           <div class="field-val" style="font-size:13px;display:flex;align-items:center;gap:10px">
             ${masterStatusBadge(it.institute_status)}
-            <button class="btn-sm" style="font-size:11px" onclick="toggleInstituteStatus(${it.institute_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeInstName}')">${isActive?'Mark Inactive':'Mark Active'}</button>
+            ${instituteSummaryMode==='details' ? `<button class="btn-sm" style="font-size:11px" onclick="toggleInstituteStatus(${it.institute_id},'${isActive?'INACTIVE':'ACTIVE'}','${safeInstName}')">${isActive?'Mark Inactive':'Mark Active'}</button>` : ''}
           </div>
         </div>
       </div>
@@ -3850,7 +4141,9 @@ async function renderInstituteDetail(instName){
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(it.in_universe)||0}</div><div class="detail-stat-label">In Universe</div></div>
           <div class="detail-stat"><div class="detail-stat-val">${parseInt(it.not_in_universe)||0}</div><div class="detail-stat-label">Not in Universe</div></div>
         </div>
-      </div>`;
+      </div>
+      <div id="institutedetail-members"></div>`;
+    renderDetailMemberList('institutedetail-members', { institute: it.institute_id });
   }catch(err){
     container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${err.message}</div>`;
   }
@@ -3861,6 +4154,16 @@ function toggleInstituteStatus(instituteId, newStatus, instName){
       await InstitutesAPI.updateStatus(instituteId, newStatus);
       showToast('Status updated');
       renderInstituteDetail(instName);
+    }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
+  }, 'Update status');
+}
+// Inline version for the Institute list row — re-renders the table in place.
+function toggleInstituteStatusInList(instituteId, newStatus){
+  confirmAction(`Mark this institute as ${newStatus==='ACTIVE'?'Active':'Inactive'}?`, async ()=>{
+    try{
+      await InstitutesAPI.updateStatus(instituteId, newStatus);
+      showToast('Status updated');
+      renderInstituteTable();
     }catch(err){ showToast('Failed to update status: '+err.message,'error'); }
   }, 'Update status');
 }
@@ -4113,8 +4416,7 @@ async function renderMemberProfile(memberId){
               <span class="tag ca">${m.gender}</span>
               <span class="tag ca">${m.region}</span>
               ${m.acaYear?`<span class="tag ca">${acaFcaStr}</span>`:''}
-              ${prefPill(p)}
-              <span class="tag ${SUPPORT_CLASS[m.support]||'unknown'}">${m.support}</span>
+              ${(m.support && m.support!=='Unknown') ? `<span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span>` : ''}
               ${(m._labels||[]).map(l=>`<span class="tag" style="background:#EEF0FA;color:#3A4E9A;border-color:#B8C0E4">🏷️ ${String(l.label_text).replace(/</g,'&lt;')}</span>`).join('')}
             </div>
           </div>
@@ -4258,7 +4560,7 @@ async function renderMemberProfile(memberId){
                 </div>` : `<span style="font-size:11px;color:var(--text3);margin-left:10px">Click “Edit preference” to change</span>`}
               </div>
             </div>
-            <div class="field-row" style="padding-right:16px"><div class="field-label">Support status</div><div class="field-val" style="font-size:13px"><span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span> <span class="edit-icon">Edit</span></div></div>
+            <div class="field-row" style="padding-right:16px"><div class="field-label">Support status</div><div class="field-val" style="font-size:13px">${(m.support && m.support!=='Unknown') ? `<span class="tag ${SUPPORT_CLASS[m.support]}">${m.support}</span> ` : ''}<span class="edit-icon">Edit</span></div></div>
             <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border)"><div class="field-label">PVS</div><div class="field-val pvs">${m.pvs}</div></div>
             <div class="field-row" style="padding-right:16px;border-bottom:none"><div class="field-label">Universe</div><div class="field-val" style="font-size:13px"><span class="tag ca">${addedToUniverse.has(m.id)?'★ L1 — In universe':'Not in universe'}</span></div></div>
             <div class="field-row" style="padding-left:16px;border-left:1px solid var(--border);border-bottom:none"><div class="field-label">Voter status</div><div class="field-val" style="font-size:13px">${statusBadge(m.voterStatus)}</div></div>

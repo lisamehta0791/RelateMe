@@ -2,6 +2,24 @@
 const router = require('express').Router();
 const pool   = require('../config/db');
 
+// City/Organisation/Institute list pages' search box supports picking several
+// exact options at once (comma-separated from the frontend's multi-select
+// dropdown) as well as a single free-text substring — >1 value means the
+// user picked specific items from the suggestion list, so match them exactly
+// (IN) rather than ILIKE, which would otherwise also match unrelated partial
+// substrings shared between the picked names.
+function multiSearchCondition(col, searchParam, params) {
+  const values = String(searchParam).split(',').map(s => s.trim()).filter(Boolean);
+  if (values.length > 1) {
+    params.push(...values);
+    return `${col} IN (${values.map(() => '?').join(',')})`;
+  } else if (values.length === 1) {
+    params.push(`%${values[0]}%`);
+    return `${col} ILIKE ?`;
+  }
+  return null;
+}
+
 // ── GET /api/dashboard ───────────────────────────────────────────────────────
 // KPI cards + preference funnel. Anchored on tbl_ca_member so members with no
 // voter-roll row loaded yet are still counted.
@@ -81,7 +99,7 @@ router.get('/city', async (req, res) => {
       LEFT JOIN tbl_voter_preference vp ON vp.icai_membership_no = m.icai_membership_no
       WHERE bam.booth_city IS NOT NULL
     `;
-    if (search) { JOINS += ' AND bam.booth_city ILIKE ?'; params.push(`%${search}%`); }
+    if (search) { const c = multiSearchCondition('bam.booth_city', search, params); if (c) JOINS += ' AND ' + c; }
     const [rows] = await pool.execute(`
       SELECT
         bam.booth_city                                                   AS city,
@@ -157,7 +175,7 @@ router.get('/firm', async (req, res) => {
     const { sort, dir } = parseSummarySort(req);
     const params = [];
     const conditions = [];
-    if (search) { conditions.push('o.org_name ILIKE ?'); params.push(`%${search}%`); }
+    if (search) { const c = multiSearchCondition('o.org_name', search, params); if (c) conditions.push(c); }
     if (ORG_TYPE_FILTERS.includes(type)) { conditions.push('o.org_type = ?'); params.push(type); }
     if (ORG_STATUS_FILTERS.includes(status)) { conditions.push('o.org_status = ?'); params.push(status); }
     const WHERE = conditions.length ? ' WHERE ' + conditions.join(' AND ') : '';
@@ -245,7 +263,7 @@ router.get('/institute', async (req, res) => {
     const { sort, dir } = parseSummarySort(req);
     const conditions = [];
     const whereParams = [];
-    if (search) { conditions.push('i.institute_name ILIKE ?'); whereParams.push(`%${search}%`); }
+    if (search) { const c = multiSearchCondition('i.institute_name', search, whereParams); if (c) conditions.push(c); }
     if (INSTITUTE_TYPE_FILTERS.includes(type)) { conditions.push('i.institute_type = ?'); whereParams.push(type); }
     if (INSTITUTE_STATUS_FILTERS.includes(status)) { conditions.push('i.institute_status = ?'); whereParams.push(status); }
     const WHERE = conditions.length ? ' WHERE ' + conditions.join(' AND ') : '';
